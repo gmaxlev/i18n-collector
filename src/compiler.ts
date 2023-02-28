@@ -1,150 +1,168 @@
-import type { LoadedFile } from "./types";
-import fsp from "fs/promises";
-import { join } from "./collector";
+import type {
+  LocaleFiles,
+  LocaleNamespace,
+  ParserFunction,
+  ParserOptions,
+} from "./types";
 import { parse } from "./parser";
-import path from "path";
-import type { Stats } from "fs";
-import chalk from "chalk";
-import { getStringSize } from "./utils";
+import type { CompiledLocaled, ParseResult } from "./types";
+import {
+  isLocaleFiles,
+  isLocaleNamespace,
+  isParseResult,
+  isParserFunction,
+  LocaleFilesTypeDescription,
+  LocaleNamespaceTypeDescription,
+  ParseResultTypeDescription,
+  ParserFunctionTypeDescription,
+} from "./types";
+import { isBoolean, isRecord, isPromise, isUndefined } from "./types";
 
-class IsNotAFileError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "DirectoryInsteadOfFileError";
-  }
+export interface CompilerParams {
+  files: LocaleFiles;
+  merge?: boolean;
+  defaultNamespace?: LocaleNamespace;
+  parser?: ParserFunction;
 }
 
-//todo improve
-export async function emitFile(filePath: string, content: Buffer) {
-  let current = {
-    stats: null as Stats | null,
-    content: null as Buffer | null,
-  };
-
-  try {
-    await fsp.access(filePath); // todo check the second argument
-
-    try {
-      current.stats = await fsp.lstat(filePath);
-    } catch (e) {
-      console.error("Error while getting file stats during emitting", filePath);
-      throw e;
+function findIdInLocales(
+  locales: ParseResult[],
+  language: string,
+  namespace?: LocaleNamespace
+) {
+  for (const locale of locales) {
+    if (locale === null) {
+      continue;
     }
-
-    if (!current.stats.isFile()) {
-      throw new IsNotAFileError(
-        "Attempt to rewrite a directory during emitting"
-      ); // todo add clear information
-    }
-
-    let currentContent: Buffer;
-
-    try {
-      currentContent = await fsp.readFile(filePath);
-    } catch (e) {
-      console.error(
-        "Error while reading current file content during emitting",
-        filePath
-      );
-      throw e;
-    }
-
-    current.content = currentContent;
-  } catch (e) {
-    if (e instanceof IsNotAFileError) {
-      throw e;
+    if (locale.language === language && locale.namespace === namespace) {
+      return locale.id;
     }
   }
+  return null;
+}
 
-  const before = current.content
-    ? {
-        size: current.stats ? current.stats.size : null,
+function join(
+  locales: ParseResult[],
+  defaultNamespace?: LocaleNamespace,
+  merge = true
+): CompiledLocaled {
+  let languages: CompiledLocaled = {};
+
+  for (const locale of locales) {
+    if (locale === null) {
+      continue;
+    }
+
+    const { id, language } = locale;
+
+    let { namespace } = locale;
+
+    if (isUndefined(namespace)) {
+      if (isUndefined(defaultNamespace)) {
+        throw new Error(
+          "Namespace is undefined and defaultNamespace is not specified"
+        );
       }
-    : null;
+      namespace = defaultNamespace;
+    }
 
-  await fsp.writeFile(filePath, content);
+    let languageRecord = (languages[language] = languages[language] || {});
 
-  const emittedStats = await fsp.stat(filePath);
+    if (!isUndefined(languageRecord[namespace]) && !merge) {
+      const conflictedLocaleId = findIdInLocales(locales, language, namespace);
 
-  const after = {
-    size: emittedStats.size,
-  };
+      throw new Error(
+        `Locales [${id}] and [${conflictedLocaleId}] have the same namespace. If you want to allow merging, set the merge option to true`
+      );
+    }
 
-  const changed = current.content ? !current.content.equals(content) : false;
+    let namespaceRecord = (languageRecord[namespace] =
+      languageRecord[namespace] || {});
 
-  return {
-    filePath,
-    before,
-    after,
-    changed,
+    namespaceRecord = {
+      ...namespaceRecord,
+      ...locale.translations,
+    };
+
+    languageRecord = {
+      ...languageRecord,
+      [namespace]: namespaceRecord,
+    };
+
+    languages = {
+      ...languages,
+      [language]: languageRecord,
+    };
+  }
+
+  return languages;
+}
+
+function wrapParseFunction(parser: ParserFunction) {
+  return async function wrappedParserFunction(params: ParserOptions) {
+    const parserResultMayPromise = parser(params);
+    let parserValue = parserResultMayPromise;
+
+    if (isPromise(parserResultMayPromise)) {
+      await parserResultMayPromise
+        .then((value) => {
+          parserValue = value;
+        })
+        .catch((error) => {
+          console.error("Error using custom parser");
+          throw error;
+        });
+    }
+
+    if (!isParseResult(parserValue)) {
+      throw new Error(
+        `Parser returned value is wrong: ${ParseResultTypeDescription}`
+      );
+    }
+
+    return parserResultMayPromise;
   };
 }
 
-export async function emit(config: {
-  result: Record<string, Record<string, any>>;
-  outputPath: string;
-}) {
-  await fsp.mkdir(config.outputPath, { recursive: true });
+export async function compile(params: CompilerParams) {
+  if (!isRecord(params)) {
+    throw new TypeError("params error: must be an object");
+  }
 
-  const savings = Object.keys(config.result).map((key) => {
-    const filePath = path.resolve(config.outputPath, key + ".json");
-    const content = Buffer.from(JSON.stringify(config.result[key]));
+  if (!isUndefined(params.merge) && !isBoolean(params.merge)) {
+    throw new TypeError("params.merge error: must be a boolean or undefined");
+  }
 
-    return emitFile(filePath, content);
-  });
+  if (
+    !isUndefined(params.defaultNamespace) &&
+    !isLocaleNamespace(params.defaultNamespace)
+  ) {
+    throw new TypeError(
+      `params.defaultNamespace error: ${LocaleNamespaceTypeDescription}`
+    );
+  }
 
-  return Promise.all(savings);
-}
+  if (!isLocaleFiles(params.files)) {
+    throw new TypeError(`params.files error: ${LocaleFilesTypeDescription}`);
+  }
 
-export async function compile(config: { files: LoadedFile[] }) {
+  if (!isUndefined(params.parser) && !isParserFunction(params.parser)) {
+    throw new TypeError(
+      `parser parameter error: ${ParserFunctionTypeDescription}`
+    );
+  }
+
+  // Wrap the parser function if it is provided or use the default parser
+  const parser = params.parser ? wrapParseFunction(params.parser) : parse;
+
   const parsed = await Promise.all(
-    config.files.map((file) =>
-      parse({
+    params.files.map((file) =>
+      parser({
         filePath: file.filePath,
         fileContent: file.content,
       })
     )
   );
 
-  return join(parsed, "default");
-}
-
-export function logCompiledFiles(files: Awaited<ReturnType<typeof emit>>) {
-  console.log("\n✅  Compiled files:");
-
-  files.forEach((file, index) => {
-    const relativePath = path.basename(file.filePath);
-
-    const sizeAfterString = getStringSize(file.after.size);
-
-    const fileNameLog = chalk.white.bold(`${index + 1}. ${relativePath}`);
-
-    // Log for new file
-    if (!file.before) {
-      const newLog = chalk.bgGreenBright("new");
-      const sizeLog = chalk.white(sizeAfterString);
-      console.log(`${fileNameLog} ${newLog} ${sizeLog}`);
-    }
-    // log for unchanged file
-    else if (!file.changed) {
-      const unchangedLog = chalk.bgGrey("unchanged");
-      const sizeLog = chalk.white(sizeAfterString);
-      console.log(`${fileNameLog} ${unchangedLog} ${sizeLog}`);
-    }
-    // log for changed file
-    else {
-      const changedLog = chalk.bgYellow("changed");
-      const sizeBeforeString = file.before.size
-        ? getStringSize(file.before.size)
-        : "?";
-      const sizeBeforeLog = chalk.white(sizeBeforeString);
-
-      const dividerLog = chalk.white("->");
-      const sizeAfterLog = chalk.white(sizeAfterString);
-      console.log(
-        `${fileNameLog} ${changedLog} ${sizeBeforeLog} ${dividerLog} ${sizeAfterLog}`
-      );
-    }
-  });
-  console.log("");
+  return join(parsed, params.defaultNamespace, params.merge);
 }
