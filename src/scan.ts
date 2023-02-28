@@ -59,19 +59,19 @@ async function scanDirectory(
 
 function validateOptions(options: ScanOptions) {
   if (!isRecord(options)) {
-    throw new TypeError("Scan options is not an object");
+    throw new TypeError("Options is not an object");
   }
 
   if (!isString(options.path)) {
-    throw new TypeError("Scan options.path is not a string");
+    throw new TypeError("path is not a string");
   }
 
   if (!isMatcher(options.matcher)) {
-    throw new TypeError(`Scan options.matcher: ${MatcherTypeDescription}`);
+    throw new TypeError(`matcher: ${MatcherTypeDescription}`);
   }
 
   if (!isUndefined(options.recursive) && !isBoolean(options.recursive)) {
-    throw new TypeError("Scan options.recursive is not a boolean");
+    throw new TypeError("recursive is not a boolean");
   }
 }
 
@@ -83,7 +83,7 @@ export async function scan(options: ScanOptions) {
 
     if (!exist) {
       throw new Error(
-        `Scan path ${options.path} does not exist or it is not a directory`
+        `Path "${options.path}" does not exist or it is not a directory`
       );
     }
 
