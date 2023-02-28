@@ -1,17 +1,24 @@
-import { excludeTypes, NOT_RECORD_TYPES } from "./utils";
-import { compile, CompilerParams } from "../compiler";
+import {
+  excludeTypes,
+  NOT_ARRAY_TYPES,
+  NOT_RECORD_TYPES,
+  NOT_FUNCTION_TYPES,
+  typesInArray,
+} from "./utils";
+import { compile, CompilerOptions } from "../compiler";
 import {
   LocaleFilesTypeDescription,
   LocaleNamespaceTypeDescription,
   ParseResultTypeDescription,
+  ParserFunctionTypeDescription,
 } from "../types";
 
-describe("compiler", () => {
+describe("compiler.ts", () => {
   describe("compile()", () => {
-    const correctParams: CompilerParams = {
+    const correctParams: CompilerOptions = {
       files: [
         {
-          filePath: "en.locale.json",
+          filePath: "/replace/in/test",
           content: Buffer.from(
             '{"namespace": "module", "translations":{"key":"value"}}'
           ),
@@ -20,91 +27,155 @@ describe("compiler", () => {
       ],
     };
 
-    test("should throw an error if params is not an object", async () => {
+    test("Should throw an error if params is not an object", async () => {
       for (const params of NOT_RECORD_TYPES) {
         const act = () => compile(params);
-        await expect(act).rejects.toThrow("params error: must be an object");
+
+        const result = await expect(act);
+
+        await result.rejects.toThrow("Options is not an object");
       }
     });
 
-    test('Should throw an error if "merge" is not a boolean', async () => {
+    test('Should throw an error if "merge" is not a boolean and undefined', async () => {
       for (const value of excludeTypes(["boolean", "undefined"])) {
-        const act = () => compile({ ...correctParams, merge: value });
+        const params = { ...correctParams, merge: value };
 
-        await expect(act).rejects.toThrow(
-          "params.merge error: must be a boolean or undefined"
-        );
+        const act = () => compile(params);
+
+        const result = await expect(act);
+
+        await result.rejects.toThrow("merge: must be a boolean or undefined");
       }
     });
 
-    test('Should throw an error if "defaultNamespace" has a wrong type', async () => {
+    test('Should throw an error if "defaultNamespace" has an invalid type', async () => {
       for (const value of excludeTypes(["string", "undefined"])) {
-        const act = () =>
-          compile({ ...correctParams, defaultNamespace: value });
+        const params = { ...correctParams, defaultNamespace: value };
 
-        await expect(act).rejects.toThrow(
-          `params.defaultNamespace error: ${LocaleNamespaceTypeDescription}`
+        const act = () => compile(params);
+
+        const result = await expect(act);
+
+        await result.rejects.toThrow(
+          `defaultNamespace: ${LocaleNamespaceTypeDescription}`
         );
       }
     });
 
     test('Should throw an error if "files" has a wrong type', async () => {
-      // @ts-expect-error
-      const act = () => compile({ ...correctParams, files: "null" });
+      const invalidTypes = [
+        ...NOT_ARRAY_TYPES,
+        ...typesInArray(NOT_ARRAY_TYPES),
+      ];
 
-      await expect(act).rejects.toThrow(
-        `params.files error: ${LocaleFilesTypeDescription}`
-      );
+      for (const value of invalidTypes) {
+        const params = { ...correctParams, files: value };
+
+        const act = () => compile(params);
+
+        const result = await expect(act);
+
+        await result.rejects.toThrow(`files: ${LocaleFilesTypeDescription}`);
+      }
     });
 
-    test("Should throw an error if parser function returns a wrong type", async () => {
-      const act = () =>
-        compile({
-          ...correctParams,
-          // @ts-expect-error
-          parser: () => {
-            return "null";
-          },
-        });
+    test('Should throw an error if "parser" is not a function', async () => {
+      for (const value of excludeTypes(["undefined", "function"])) {
+        const params = { ...correctParams, parser: value };
 
-      await expect(act).rejects.toThrow(
-        `Parser returned value is wrong: ${ParseResultTypeDescription}`
-      );
+        const act = () => compile(params);
+
+        const result = await expect(act);
+
+        await result.rejects.toThrow(
+          `parser: ${ParserFunctionTypeDescription}`
+        );
+      }
     });
 
-    test("Should use provided parser function", async () => {
-      const result = await compile({
+    test("Should throw an error if a sync parser function returns a wrong type", async () => {
+      const params: CompilerOptions = {
         ...correctParams,
+        // @ts-expect-error
         parser: () => {
-          return {
-            id: "±!@#$%^&*.locale.json",
-            language: "__lng__",
-            namespace: "_module",
-            translations: {
-              key: "_value",
-            },
-          };
+          return "null";
         },
-      });
+      };
+
+      const act = () => compile(params);
+
+      const result = await expect(act);
+
+      await result.rejects.toThrow(
+        `Parser has returned an invalid type: ${ParseResultTypeDescription}`
+      );
+    });
+
+    test("Should throw an error if an async parser function returns a wrong type", async () => {
+      const params: CompilerOptions = {
+        ...correctParams,
+        // @ts-expect-error
+        parser: async () => {
+          return Promise.resolve("null");
+        },
+      };
+
+      const act = () => compile(params);
+
+      const result = await expect(act);
+
+      await result.rejects.toThrow(
+        `Parser has returned an invalid type: ${ParseResultTypeDescription}`
+      );
+    });
+
+    test("Should use a provided parser function", async () => {
+      const parser = () => {
+        return {
+          id: "file.not.json",
+          language: "__lng__",
+          namespace: "_module",
+          translations: {
+            key: "_value_",
+          },
+        };
+      };
+
+      const content = Buffer.from("This content needs a special parser");
+
+      const params = {
+        ...correctParams,
+        files: [
+          {
+            filePath: "file.not.json",
+            content,
+            bytes: content.length,
+          },
+        ],
+        parser,
+      };
+
+      const result = await compile(params);
 
       expect(result).toEqual({
         __lng__: {
           _module: {
-            key: "_value",
+            key: "_value_",
           },
         },
       });
     });
 
-    test('Should use default parser function if "parser" is not provided', async () => {
-      const result = await compile({
+    test('Should use the default parser function if "parser" is not provided', async () => {
+      const params = {
         ...correctParams,
         files: [
           {
             filePath: "en.locale.json",
             content: Buffer.from(
               JSON.stringify({
-                namespace: "module",
+                namespace: "$module$",
                 translations: {
                   key: "_value_",
                 },
@@ -113,60 +184,137 @@ describe("compiler", () => {
             bytes: 15,
           },
         ],
-      });
+      };
+
+      const result = await compile(params);
 
       expect(result).toEqual({
         en: {
-          module: {
+          $module$: {
             key: "_value_",
           },
         },
       });
     });
 
-    test('Should merge namespaces if "merge" is true', async () => {
-      const result = await compile({
+    test('Should throw an error if "defaultNamespace" is not provided and a namespace is not found in a file', async () => {
+      const file = {
+        filePath: "en.locale.json",
+        content: Buffer.from(
+          JSON.stringify({
+            translations: {
+              key: "_value_",
+            },
+          })
+        ),
+        bytes: 15,
+      };
+
+      const params: CompilerOptions = {
+        ...correctParams,
+        files: [file],
+      };
+
+      const act = () => compile(params);
+
+      const result = await expect(act);
+
+      await result.rejects.toThrow(
+        `"namespace" is not defined in locale [${file.filePath}] and no default namespace is provided"`
+      );
+    });
+
+    test('Should use provided "defaultNamespace" if no provided namespace in a locale', async () => {
+      const file = {
+        filePath: "en.locale.json",
+        content: Buffer.from(
+          JSON.stringify({
+            translations: {
+              key: "_value_",
+            },
+          })
+        ),
+        bytes: 15,
+      };
+
+      const params: CompilerOptions = {
+        ...correctParams,
+        defaultNamespace: "__default_namespace__",
+        files: [file],
+      };
+
+      const result = await compile(params);
+
+      expect(result).toEqual({
+        en: { __default_namespace__: { key: "_value_" } },
+      });
+    });
+
+    test('Should merge the same namespaces from different files if "merge" is true', async () => {
+      const file1 = {
+        filePath: "/src/en.locale.json",
+        content: Buffer.from(
+          JSON.stringify({
+            namespace: "the_same_namespace",
+            translations: {
+              key_1: "_value_1",
+            },
+          })
+        ),
+        bytes: 15,
+      };
+
+      const file2WithSameNamespace = {
+        filePath: "/src/other/module/en.locale.json",
+        content: Buffer.from(
+          JSON.stringify({
+            namespace: "the_same_namespace",
+            translations: {
+              key_2: "_value_2",
+            },
+          })
+        ),
+        bytes: 15,
+      };
+
+      const file3WithAnotherNamespace = {
+        filePath: "/src/another/module/en.locale.json",
+        content: Buffer.from(
+          JSON.stringify({
+            namespace: "another_namespace",
+            translations: {
+              key_3: "_value_3",
+            },
+          })
+        ),
+        bytes: 15,
+      };
+
+      const file3WithAnotherNamespaceAndLocale = {
+        filePath: "/src/another/module/fr.locale.json",
+        content: Buffer.from(
+          JSON.stringify({
+            namespace: "another_namespace",
+            translations: {
+              key_3: "_value_3",
+            },
+          })
+        ),
+        bytes: 15,
+      };
+
+      const params = {
         ...correctParams,
         merge: true,
         files: [
-          {
-            filePath: "/src/en.locale.json",
-            content: Buffer.from(
-              JSON.stringify({
-                namespace: "the_same_namespace",
-                translations: {
-                  key_1: "_value_1",
-                },
-              })
-            ),
-            bytes: 15,
-          },
-          {
-            filePath: "/src/other/module/en.locale.json",
-            content: Buffer.from(
-              JSON.stringify({
-                namespace: "the_same_namespace",
-                translations: {
-                  key_2: "_value_2",
-                },
-              })
-            ),
-            bytes: 15,
-          },
-          {
-            filePath: "/src/another/module/en.locale.json",
-            content: Buffer.from(
-              JSON.stringify({
-                namespace: "another_namespace",
-                translations: {
-                  key_3: "_value_3",
-                },
-              })
-            ),
-            bytes: 15,
-          },
+          file1,
+          file2WithSameNamespace,
+          file3WithAnotherNamespace,
+          file3WithAnotherNamespaceAndLocale,
         ],
-      });
+      };
+
+      const result = await compile(params);
 
       expect(result).toEqual({
         en: {
@@ -178,56 +326,84 @@ describe("compiler", () => {
             key_3: "_value_3",
           },
         },
+        fr: {
+          another_namespace: {
+            key_3: "_value_3",
+          },
+        },
       });
     });
 
-    test('Should throw error if "merge" is false and namespaces are located in different files', async () => {
-      const act = () =>
-        compile({
-          ...correctParams,
-          merge: false,
-          files: [
-            {
-              filePath: "/src/en.locale.json",
-              content: Buffer.from(
-                JSON.stringify({
-                  namespace: "the_same_namespace",
-                  translations: {
-                    key_1: "_value_1",
-                  },
-                })
-              ),
-              bytes: 15,
+    test('Should throw error if "merge" is false and the same namespaces are located in different files', async () => {
+      const file1 = {
+        filePath: "/src/en.locale.json",
+        content: Buffer.from(
+          JSON.stringify({
+            namespace: "the_same_namespace",
+            translations: {
+              key_1: "_value_1",
             },
-            {
-              filePath: "/src/other/module/en.locale.json",
-              content: Buffer.from(
-                JSON.stringify({
-                  namespace: "the_same_namespace",
-                  translations: {
-                    key_2: "_value_2",
-                  },
-                })
-              ),
-              bytes: 15,
-            },
-            {
-              filePath: "/src/another/module/en.locale.json",
-              content: Buffer.from(
-                JSON.stringify({
-                  namespace: "another_namespace",
-                  translations: {
-                    key_3: "_value_3",
-                  },
-                })
-              ),
-              bytes: 15,
-            },
-          ],
-        });
+          })
+        ),
+        bytes: 15,
+      };
 
-      await expect(act).rejects.toThrow(
-        "Locales [/src/other/module/en.locale.json] and [/src/en.locale.json] have the same namespace. If you want to allow merging, set the merge option to true"
+      const file2WithSameNamespace = {
+        filePath: "/src/other/module/en.locale.json",
+        content: Buffer.from(
+          JSON.stringify({
+            namespace: "the_same_namespace",
+            translations: {
+              key_2: "_value_2",
+            },
+          })
+        ),
+        bytes: 15,
+      };
+
+      const file3WithAnotherNamespace = {
+        filePath: "/src/another/module/en.locale.json",
+        content: Buffer.from(
+          JSON.stringify({
+            namespace: "another_namespace",
+            translations: {
+              key_3: "_value_3",
+            },
+          })
+        ),
+        bytes: 15,
+      };
+
+      const file3WithAnotherNamespaceAndLocale = {
+        filePath: "/src/another/module/fr.locale.json",
+        content: Buffer.from(
+          JSON.stringify({
+            namespace: "another_namespace",
+            translations: {
+              key_3: "_value_3",
+            },
+          })
+        ),
+        bytes: 15,
+      };
+
+      const params = {
+        ...correctParams,
+        merge: false,
+        files: [
+          file1,
+          file2WithSameNamespace,
+          file3WithAnotherNamespace,
+          file3WithAnotherNamespaceAndLocale,
+        ],
+      };
+
+      const act = () => compile(params);
+
+      const result = await expect(act);
+
+      await result.rejects.toThrow(
+        `Locales [${file2WithSameNamespace.filePath}] and [${file1.filePath}] have the same namespace. If you want to allow merging, set the "merge" option to true`
       );
     });
   });

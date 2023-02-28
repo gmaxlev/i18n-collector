@@ -18,7 +18,7 @@ import {
 } from "./types";
 import { isBoolean, isRecord, isPromise, isUndefined } from "./types";
 
-export interface CompilerParams {
+export interface CompilerOptions {
   files: LocaleFiles;
   merge?: boolean;
   defaultNamespace?: LocaleNamespace;
@@ -60,7 +60,7 @@ function join(
     if (isUndefined(namespace)) {
       if (isUndefined(defaultNamespace)) {
         throw new Error(
-          "Namespace is undefined and defaultNamespace is not specified"
+          `"namespace" is not defined in locale [${id}] and no default namespace is provided"`
         );
       }
       namespace = defaultNamespace;
@@ -69,10 +69,14 @@ function join(
     let languageRecord = (languages[language] = languages[language] || {});
 
     if (!isUndefined(languageRecord[namespace]) && !merge) {
-      const conflictedLocaleId = findIdInLocales(locales, language, namespace);
+      const conflictedLocaleId = findIdInLocales(
+        locales.filter((item) => item !== locale),
+        language,
+        namespace
+      );
 
       throw new Error(
-        `Locales [${id}] and [${conflictedLocaleId}] have the same namespace. If you want to allow merging, set the merge option to true`
+        `Locales [${id}] and [${conflictedLocaleId}] have the same namespace. If you want to allow merging, set the "merge" option to true`
       );
     }
 
@@ -116,7 +120,7 @@ function wrapParseFunction(parser: ParserFunction) {
 
     if (!isParseResult(parserValue)) {
       throw new Error(
-        `Parser returned value is wrong: ${ParseResultTypeDescription}`
+        `Parser has returned an invalid type: ${ParseResultTypeDescription}`
       );
     }
 
@@ -124,45 +128,48 @@ function wrapParseFunction(parser: ParserFunction) {
   };
 }
 
-export async function compile(params: CompilerParams) {
-  if (!isRecord(params)) {
-    throw new TypeError("params error: must be an object");
-  }
+export async function compile(params: CompilerOptions) {
+  try {
+    if (!isRecord(params)) {
+      throw new TypeError("Options is not an object");
+    }
 
-  if (!isUndefined(params.merge) && !isBoolean(params.merge)) {
-    throw new TypeError("params.merge error: must be a boolean or undefined");
-  }
+    if (!isUndefined(params.merge) && !isBoolean(params.merge)) {
+      throw new TypeError("merge: must be a boolean or undefined");
+    }
 
-  if (
-    !isUndefined(params.defaultNamespace) &&
-    !isLocaleNamespace(params.defaultNamespace)
-  ) {
-    throw new TypeError(
-      `params.defaultNamespace error: ${LocaleNamespaceTypeDescription}`
+    if (
+      !isUndefined(params.defaultNamespace) &&
+      !isLocaleNamespace(params.defaultNamespace)
+    ) {
+      throw new TypeError(
+        `defaultNamespace: ${LocaleNamespaceTypeDescription}`
+      );
+    }
+
+    if (!isLocaleFiles(params.files)) {
+      throw new TypeError(`files: ${LocaleFilesTypeDescription}`);
+    }
+
+    if (!isUndefined(params.parser) && !isParserFunction(params.parser)) {
+      throw new TypeError(`parser: ${ParserFunctionTypeDescription}`);
+    }
+
+    // Wrap the parser function if it is provided or use the default parser
+    const parser = params.parser ? wrapParseFunction(params.parser) : parse;
+
+    const parsed = await Promise.all(
+      params.files.map((file) =>
+        parser({
+          filePath: file.filePath,
+          fileContent: file.content,
+        })
+      )
     );
+
+    return join(parsed, params.defaultNamespace, params.merge);
+  } catch (error) {
+    console.error("Error while compiling");
+    throw error;
   }
-
-  if (!isLocaleFiles(params.files)) {
-    throw new TypeError(`params.files error: ${LocaleFilesTypeDescription}`);
-  }
-
-  if (!isUndefined(params.parser) && !isParserFunction(params.parser)) {
-    throw new TypeError(
-      `parser parameter error: ${ParserFunctionTypeDescription}`
-    );
-  }
-
-  // Wrap the parser function if it is provided or use the default parser
-  const parser = params.parser ? wrapParseFunction(params.parser) : parse;
-
-  const parsed = await Promise.all(
-    params.files.map((file) =>
-      parser({
-        filePath: file.filePath,
-        fileContent: file.content,
-      })
-    )
-  );
-
-  return join(parsed, params.defaultNamespace, params.merge);
 }
