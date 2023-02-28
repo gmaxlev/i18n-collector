@@ -19,6 +19,10 @@ export function excludeTypes(exclude: Array<keyof typeof types>) {
     .map((key) => (types as any)[key]);
 }
 
+export function typesInArray(types: any[]) {
+  return types.map((value) => [value]);
+}
+
 export const NOT_NULL_TYPES = excludeTypes(["null"]);
 export const NOT_UNDEFINED_TYPES = excludeTypes(["undefined"]);
 export const NOT_BOOLEAN_TYPES = excludeTypes(["boolean"]);
