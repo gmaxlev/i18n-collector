@@ -1,22 +1,22 @@
 import { vol } from "memfs";
-import { CompiledLocaledTypeDescription } from "./../types";
-import type { EmitterParams } from "./../emitter";
+import { CompiledLocalesTypeDescription } from "../types";
 import { emit } from "../emitter";
 import { NOT_RECORD_TYPES, NOT_STRING_TYPES, excludeTypes } from "./utils";
+import type { EmitterOptions } from "../emitter";
 
 jest.mock("fs/promises");
 
-describe("Emitter", () => {
+describe("emitter.ts", () => {
   afterEach(() => {
     vol.reset();
   });
 
   describe("emit()", () => {
-    let correctParams: EmitterParams;
+    let correctOptions: EmitterOptions;
 
     beforeEach(() => {
-      correctParams = {
-        compiled: {
+      correctOptions = {
+        compiledLocales: {
           uk: {
             namespace: {
               key: "value",
@@ -27,48 +27,54 @@ describe("Emitter", () => {
       };
     });
 
-    test("Should throw an error if params is not an object", async () => {
+    test("Should throw an error if options is not an object", async () => {
       for (const value of NOT_RECORD_TYPES) {
-        await expect(emit(value)).rejects.toThrow(
-          "params argument: should be an object"
-        );
+        const act = () => emit(value);
+
+        const result = await expect(act);
+
+        await result.rejects.toThrow("options should be an object");
       }
     });
 
-    test('Should throw an error if "compiled" has an invalid type', async () => {
-      const params = { ...correctParams, compiled: "invalid" };
+    test('Should throw an error if "compiledLocales" has an invalid type', async () => {
+      const options = { ...correctOptions, compiledLocales: "invalid" };
 
       // @ts-expect-error
-      const act = () => emit(params);
+      const act = () => emit(options);
 
-      await expect(act).rejects.toThrow(
-        `params.compiled: ${CompiledLocaledTypeDescription}`
+      const result = await expect(act);
+
+      await result.rejects.toThrow(
+        `compiledLocales: ${CompiledLocalesTypeDescription}`
       );
     });
 
     test('Should throw an error if "outputPath" is not a string', async () => {
       for (const value of NOT_STRING_TYPES) {
-        const params = { ...correctParams, outputPath: value };
+        const options = { ...correctOptions, outputPath: value };
 
-        const act = () => emit(params);
+        const act = () => emit(options);
 
-        await expect(act).rejects.toThrow(
-          "params.outputPath: should be a string"
-        );
+        const result = await expect(act);
+
+        await result.rejects.toThrow("outputPath: should be a string");
       }
     });
 
-    test("Should throw an error if 'clean' is not a boolean and undefined", async () => {
-      for (const value of excludeTypes(["boolean", "undefined"])) {
-        const params = { ...correctParams, clean: value };
+    test('Should throw an error if "clear" is not a boolean and undefined', async () => {
+      for (const value of excludeTypes(["undefined", "boolean"])) {
+        const options = { ...correctOptions, clear: value };
 
-        const act = () => emit(params);
+        const act = () => emit(options);
 
-        await expect(act).rejects.toThrow("params.clean: should be a boolean");
+        const result = await expect(act);
+
+        await result.rejects.toThrow("clear: should be a boolean");
       }
     });
 
-    test("Should throw an error if 'outputPath' is not a directory", async () => {
+    test('Should throw an error if "outputPath" is not a directory', async () => {
       vol.fromNestedJSON(
         {
           directory: "file content",
@@ -79,117 +85,360 @@ describe("Emitter", () => {
         "/src"
       );
 
-      const params = { ...correctParams, outputPath: "/src/directory" };
+      const options = { ...correctOptions, outputPath: "/src/directory" };
 
-      const act = () => emit(params);
+      const act = () => emit(options);
 
-      await expect(act).rejects.toThrow(
+      const result = await expect(act);
+
+      await result.rejects.toThrow(
         'Output path "/src/directory" is not a directory'
       );
     });
 
-    test('Should create directory and emit files if "outputPath" is not exist', async () => {
-      vol.fromNestedJSON(
+    test('Should create directory and emit files if "outputPath" is not exist and "clear" has true or false', async () => {
+      const cases = [
         {
-          file: "file content",
-          directory1: {
-            "program.ts": "...",
-          },
+          clear: false,
         },
-        "/src"
-      );
+        {
+          clear: true,
+        },
+      ];
 
-      const params = {
-        ...correctParams,
+      expect.assertions(7 * cases.length);
+
+      for (const item of cases) {
+        vol.reset();
+
+        vol.fromNestedJSON(
+          {
+            file: "file content",
+            directory: {
+              "program.ts": "...",
+            },
+          },
+          "/src"
+        );
+
+        const options = {
+          ...correctOptions,
+          outputPath: "/src/locales",
+          clear: item.clear,
+          compiledLocales: {
+            uk: {
+              module1: {
+                key_1: "value_1",
+              },
+            },
+            en: {
+              module1: {
+                key_1: "value_2",
+              },
+            },
+          },
+        };
+
+        const result = await emit(options);
+
+        expect(result).toHaveLength(2);
+
+        expect(result).toMatchObject([
+          {
+            filePath: "/src/locales/uk.json",
+            localeFileBefore: null,
+            isChanged: false,
+            isDeleted: false,
+            isNew: true,
+          },
+          {
+            filePath: "/src/locales/en.json",
+            localeFileBefore: null,
+            isChanged: false,
+            isDeleted: false,
+            isNew: true,
+          },
+        ]);
+
+        const resultElement1 = result[0];
+        const resultElement2 = result[1];
+
+        if (resultElement1) {
+          expect(resultElement1.localeFileNew?.content).toBeInstanceOf(Buffer);
+
+          const bufferMatchResult =
+            resultElement1.localeFileNew?.content.equals(
+              Buffer.from(JSON.stringify(options.compiledLocales.uk))
+            );
+
+          expect(bufferMatchResult).toBe(true);
+        }
+
+        if (resultElement2) {
+          expect(resultElement2.localeFileNew?.content).toBeInstanceOf(Buffer);
+
+          const bufferMatchResult =
+            resultElement2.localeFileNew?.content.equals(
+              Buffer.from(JSON.stringify(options.compiledLocales.en))
+            );
+
+          expect(bufferMatchResult).toBe(true);
+        }
+
+        expect(vol.toJSON()).toEqual({
+          "/src/file": "file content",
+          "/src/directory/program.ts": "...",
+          "/src/locales/uk.json": JSON.stringify({
+            module1: { key_1: "value_1" },
+          }),
+          "/src/locales/en.json": JSON.stringify({
+            module1: { key_1: "value_2" },
+          }),
+        });
+      }
+    });
+
+    test('Should clear a directory if "clear" is true', async () => {
+      const fsSnapshot = {
+        file: "file content",
+        directory: {
+          "program.ts": "...",
+        },
+        locales: {
+          "uk.json": JSON.stringify({
+            module1: { key_1: "old_value_1" },
+          }),
+          "en.json": JSON.stringify({
+            module1: { key_1: "old_value_2" },
+          }),
+          "fr.json": JSON.stringify({
+            module1: { key_1: "should_be_deleted" },
+          }),
+        },
+      };
+
+      vol.fromNestedJSON(fsSnapshot, "/src");
+
+      const options = {
+        ...correctOptions,
         outputPath: "/src/locales",
-        compiled: {
+        clear: true,
+        compiledLocales: {
           uk: {
-            namespace: {
+            module1: {
+              key_1: "value_1",
+            },
+          },
+          en: {
+            module1: {
               key_1: "value_2",
             },
           },
         },
       };
 
-      await emit(params);
+      const result = await emit(options);
+
+      expect.assertions(13);
+
+      expect(result).toHaveLength(3);
+
+      expect(result).toMatchObject([
+        {
+          filePath: "/src/locales/uk.json",
+          isChanged: true,
+          isDeleted: false,
+          isNew: false,
+        },
+        {
+          filePath: "/src/locales/en.json",
+          isChanged: true,
+          isDeleted: false,
+          isNew: false,
+        },
+        {
+          filePath: "/src/locales/fr.json",
+          localeFileNew: null,
+          isChanged: false,
+          isDeleted: true,
+          isNew: false,
+        },
+      ]);
+
+      const resultElement1 = result[0];
+      const resultElement2 = result[1];
+      const resultElement3 = result[2];
+
+      if (resultElement1) {
+        expect(resultElement1.localeFileNew?.content).toBeInstanceOf(Buffer);
+        expect(resultElement1.localeFileBefore?.content).toBeInstanceOf(Buffer);
+
+        const bufferMatchNewResult =
+          resultElement1.localeFileNew?.content.equals(
+            Buffer.from(JSON.stringify(options.compiledLocales.uk))
+          );
+
+        const bufferMatchOldResult =
+          resultElement1.localeFileBefore?.content.equals(
+            Buffer.from(fsSnapshot.locales["uk.json"])
+          );
+
+        expect(bufferMatchNewResult).toBe(true);
+        expect(bufferMatchOldResult).toBe(true);
+      }
+
+      if (resultElement2) {
+        expect(resultElement2.localeFileNew?.content).toBeInstanceOf(Buffer);
+        expect(resultElement2.localeFileBefore?.content).toBeInstanceOf(Buffer);
+
+        const bufferMatchNewResult =
+          resultElement2.localeFileNew?.content.equals(
+            Buffer.from(JSON.stringify(options.compiledLocales.en))
+          );
+
+        const bufferMatchOldResult =
+          resultElement2.localeFileBefore?.content.equals(
+            Buffer.from(fsSnapshot.locales["en.json"])
+          );
+
+        expect(bufferMatchNewResult).toBe(true);
+        expect(bufferMatchOldResult).toBe(true);
+      }
+
+      if (resultElement3) {
+        expect(resultElement3.localeFileBefore?.content).toBeInstanceOf(Buffer);
+
+        const bufferMatchOldResult =
+          resultElement3.localeFileBefore?.content.equals(
+            Buffer.from(fsSnapshot.locales["fr.json"])
+          );
+
+        expect(bufferMatchOldResult).toBe(true);
+      }
 
       expect(vol.toJSON()).toEqual({
         "/src/file": "file content",
-        "/src/directory1/program.ts": "...",
-        "/src/locales/uk.json": '{"namespace":{"key_1":"value_2"}}',
+        "/src/directory/program.ts": "...",
+        "/src/locales/uk.json": JSON.stringify({
+          module1: { key_1: "value_1" },
+        }),
+        "/src/locales/en.json": JSON.stringify({
+          module1: { key_1: "value_2" },
+        }),
       });
     });
 
-    test('Should not clear directory if "clean" is false', async () => {
-      vol.fromNestedJSON(
-        {
-          file: "file content",
-          directory1: {
-            "program.ts": "...",
-          },
-          locales: {
-            someFile: "some content",
-          },
+    test('Should not clear a directory if "clear" is false', async () => {
+      const fsSnapshot = {
+        file: "file content",
+        directory: {
+          "program.ts": "...",
         },
-        "/src"
-      );
+        locales: {
+          "uk.json": JSON.stringify({
+            module1: { key_1: "old_value_1" },
+          }),
+          "en.json": JSON.stringify({
+            module1: { key_1: "old_value_2" },
+          }),
+          "fr.json": JSON.stringify({
+            module1: { key_1: "should_not_be_deleted" },
+          }),
+        },
+      };
 
-      const params = {
-        ...correctParams,
+      vol.fromNestedJSON(fsSnapshot, "/src");
+
+      const options = {
+        ...correctOptions,
         outputPath: "/src/locales",
-        clean: false,
-        compiled: {
+        clear: false,
+        compiledLocales: {
           uk: {
-            namespace: {
+            module1: {
+              key_1: "value_1",
+            },
+          },
+          en: {
+            module1: {
               key_1: "value_2",
             },
           },
         },
       };
 
-      await emit(params);
+      const result = await emit(options);
 
-      expect(vol.toJSON()).toEqual({
-        "/src/file": "file content",
-        "/src/directory1/program.ts": "...",
-        "/src/locales/uk.json": '{"namespace":{"key_1":"value_2"}}',
-        "/src/locales/someFile": "some content",
-      });
-    });
+      expect.assertions(11);
 
-    test('Should clear directory if "clean" is true', async () => {
-      vol.fromNestedJSON(
+      expect(result).toHaveLength(2);
+
+      expect(result).toMatchObject([
         {
-          file: "file content",
-          directory1: {
-            "program.ts": "...",
-          },
-          locales: {
-            someFile: "some content",
-          },
+          filePath: "/src/locales/uk.json",
+          isChanged: true,
+          isDeleted: false,
+          isNew: false,
         },
-        "/src"
-      );
-
-      const params = {
-        ...correctParams,
-        outputPath: "/src/locales",
-        clean: true,
-        compiled: {
-          uk: {
-            namespace: {
-              key_1: "value_2",
-            },
-          },
+        {
+          filePath: "/src/locales/en.json",
+          isChanged: true,
+          isDeleted: false,
+          isNew: false,
         },
-      };
+      ]);
 
-      await emit(params);
+      const resultElement1 = result[0];
+      const resultElement2 = result[1];
+
+      if (resultElement1) {
+        expect(resultElement1.localeFileNew?.content).toBeInstanceOf(Buffer);
+        expect(resultElement1.localeFileBefore?.content).toBeInstanceOf(Buffer);
+
+        const bufferMatchNewResult =
+          resultElement1.localeFileNew?.content.equals(
+            Buffer.from(JSON.stringify(options.compiledLocales.uk))
+          );
+
+        const bufferMatchOldResult =
+          resultElement1.localeFileBefore?.content.equals(
+            Buffer.from(fsSnapshot.locales["uk.json"])
+          );
+
+        expect(bufferMatchNewResult).toBe(true);
+        expect(bufferMatchOldResult).toBe(true);
+      }
+
+      if (resultElement2) {
+        expect(resultElement2.localeFileNew?.content).toBeInstanceOf(Buffer);
+        expect(resultElement2.localeFileBefore?.content).toBeInstanceOf(Buffer);
+
+        const bufferMatchNewResult =
+          resultElement2.localeFileNew?.content.equals(
+            Buffer.from(JSON.stringify(options.compiledLocales.en))
+          );
+
+        const bufferMatchOldResult =
+          resultElement2.localeFileBefore?.content.equals(
+            Buffer.from(fsSnapshot.locales["en.json"])
+          );
+
+        expect(bufferMatchNewResult).toBe(true);
+        expect(bufferMatchOldResult).toBe(true);
+      }
 
       expect(vol.toJSON()).toEqual({
         "/src/file": "file content",
-        "/src/directory1/program.ts": "...",
-        "/src/locales/uk.json": '{"namespace":{"key_1":"value_2"}}',
+        "/src/directory/program.ts": "...",
+        "/src/locales/uk.json": JSON.stringify({
+          module1: { key_1: "value_1" },
+        }),
+        "/src/locales/en.json": JSON.stringify({
+          module1: { key_1: "value_2" },
+        }),
+        "/src/locales/fr.json": JSON.stringify({
+          module1: { key_1: "should_not_be_deleted" },
+        }),
       });
     });
   });

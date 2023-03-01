@@ -157,9 +157,9 @@ export const ParseResultTypeDescription =
 
 /** CompiledLocales Type */
 
-export type CompiledLocaled = Record<string, Record<string, unknown>>;
+export type CompiledLocales = Record<string, Record<string, unknown>>;
 
-export function isCompiledLocales(value: unknown): value is CompiledLocaled {
+export function isCompiledLocales(value: unknown): value is CompiledLocales {
   if (!isRecord(value)) {
     return false;
   }
@@ -173,5 +173,5 @@ export function isCompiledLocales(value: unknown): value is CompiledLocaled {
   return true;
 }
 
-export const CompiledLocaledTypeDescription =
+export const CompiledLocalesTypeDescription =
   "CompiledLocales must be an object";

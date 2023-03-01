@@ -163,9 +163,13 @@ async function processLocales(params: {
 
   console.log("📝 Found", files.length, "files to process");
 
-  const compiled = await compile({ files });
+  const compiledLocales = await compile({ files });
 
-  await emit({ compiled, outputPath: params.outputPath, clean: params.clear });
+  await emit({
+    compiledLocales,
+    outputPath: params.outputPath,
+    clear: params.clear,
+  });
 
   console.log("🏁 Finished in", performance.now() - now, "ms");
 }

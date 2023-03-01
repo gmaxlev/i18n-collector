@@ -5,7 +5,7 @@ import type {
   ParserOptions,
 } from "./types";
 import { parse } from "./parser";
-import type { CompiledLocaled, ParseResult } from "./types";
+import type { CompiledLocales, ParseResult } from "./types";
 import {
   isLocaleFiles,
   isLocaleNamespace,
@@ -45,8 +45,8 @@ function join(
   locales: ParseResult[],
   defaultNamespace?: LocaleNamespace,
   merge = true
-): CompiledLocaled {
-  let languages: CompiledLocaled = {};
+): CompiledLocales {
+  let languages: CompiledLocales = {};
 
   for (const locale of locales) {
     if (locale === null) {

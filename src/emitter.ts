@@ -4,13 +4,13 @@ import chalk from "chalk";
 import { scan } from "./scan";
 import { getStringFilesize, isAvailableDirectory } from "./utils";
 import type {
-  CompiledLocaled,
+  CompiledLocales,
   LocaleFile,
   LocaleFiles,
   Matcher,
 } from "./types";
 import {
-  CompiledLocaledTypeDescription,
+  CompiledLocalesTypeDescription,
   isCompiledLocales,
   isBoolean,
   isEnoentError,
@@ -19,64 +19,54 @@ import {
   isUndefined,
 } from "./types";
 
-export interface EmitterParams {
-  compiled: CompiledLocaled;
+export interface EmitterOptions {
+  compiledLocales: CompiledLocales;
   outputPath: string;
-  clean?: boolean;
-  matcher?: Matcher;
+  clear?: boolean;
 }
 
-function logCompiledFiles(
-  snapshotBeforeWriting: Map<string, LocaleFile>,
-  files: LocaleFiles,
-  clear: boolean
-) {
-  console.log("\n✅  Compiled files:");
+type Snapshot = Map<string, LocaleFile>;
 
-  files.forEach((file, index) => {
-    const snapshot = snapshotBeforeWriting.get(file.filePath);
-    snapshotBeforeWriting.delete(file.filePath);
-    const isNew = !snapshot;
-    const isChanged =
-      !isNew && snapshot && !snapshot.content.equals(file.content);
-    const relativePath = path.basename(file.filePath);
+interface Stats {
+  filePath: string;
+  isNew: boolean;
+  isChanged: boolean;
+  isDeleted: boolean;
+  localeFileNew: LocaleFile | null;
+  localeFileBefore: LocaleFile | null;
+}
+
+function log(stats: Stats[]) {
+  stats.forEach((item, index) => {
+    const relativePath = path.basename(item.filePath);
     const fileNameLog = chalk.white.bold(`${index + 1}. ${relativePath}`);
 
-    if (isNew) {
+    if (item.isNew) {
       const newLog = chalk.bgGreenBright("new");
-      const sizeLog = chalk.white(getStringFilesize(file.bytes));
+      const fileSize = Number(item.localeFileNew?.bytes);
+      const sizeLog = chalk.white(getStringFilesize(fileSize));
       console.log(`${fileNameLog} ${newLog} ${sizeLog}`);
-    } else if (isChanged) {
+    } else if (item.isChanged) {
       const changedLog = chalk.bgYellow("changed");
-      const sizeBeforeString = getStringFilesize(snapshot.bytes);
-      const sizeBeforeLog = chalk.white(sizeBeforeString);
 
+      const fileSizeBefore = Number(item.localeFileBefore?.bytes);
+
+      const sizeBeforeString = getStringFilesize(fileSizeBefore);
+      const sizeBeforeLog = chalk.white(sizeBeforeString);
       const dividerLog = chalk.white("->");
-      const sizeAfterLog = chalk.white(getStringFilesize(file.bytes));
+
+      const fileSizeNew = Number(item.localeFileNew?.bytes);
+      const sizeAfterLog = chalk.white(getStringFilesize(fileSizeNew));
       console.log(
         `${fileNameLog} ${changedLog} ${sizeBeforeLog} ${dividerLog} ${sizeAfterLog}`
       );
-    } else {
+    } else if (item.isDeleted) {
       const unchangedLog = chalk.bgGrey("unchanged");
-      const sizeLog = chalk.white(getStringFilesize(file.bytes));
+      const fileSize = Number(item.localeFileBefore?.bytes);
+      const sizeLog = chalk.white(getStringFilesize(fileSize));
       console.log(`${fileNameLog} ${unchangedLog} ${sizeLog}`);
     }
   });
-
-  if (clear) {
-    const deletedFiles = [...snapshotBeforeWriting.entries()];
-
-    if (deletedFiles.length) {
-      console.log("\n🗑  Deleted files:");
-      deletedFiles.forEach(([filePath, file], index) => {
-        const relativePath = path.basename(file.filePath);
-        const fileNameLog = chalk.white.bold(`${index + 1}. ${relativePath}`);
-        const newLog = chalk.bgRedBright("new");
-        const sizeLog = chalk.white(getStringFilesize(file.bytes));
-        console.log(`${fileNameLog} ${newLog} ${sizeLog}`);
-      });
-    }
-  }
 
   console.log("");
 }
@@ -100,6 +90,54 @@ async function emitFile(
     content,
     bytes: stat.size,
   };
+}
+
+async function emitFiles(compiledLocales: CompiledLocales, outputPath: string) {
+  const savings = Object.keys(compiledLocales).map((key) => {
+    const filePath = path.resolve(outputPath, key + ".json");
+    const content = Buffer.from(JSON.stringify(compiledLocales[key]));
+    return emitFile(filePath, content);
+  });
+
+  return Promise.all(savings);
+}
+
+function getStats(before: Snapshot, after: LocaleFiles, withDeleted: boolean) {
+  const stats: Stats[] = [];
+  const copyMap = new Map(before);
+
+  after.forEach((file) => {
+    const snapshot = copyMap.get(file.filePath);
+    const isNew = !snapshot;
+    const isChanged =
+      !isNew && snapshot && !snapshot.content.equals(file.content);
+
+    copyMap.delete(file.filePath);
+
+    stats.push({
+      filePath: file.filePath,
+      isNew,
+      isChanged,
+      isDeleted: false,
+      localeFileNew: file,
+      localeFileBefore: snapshot ? snapshot : null,
+    });
+  });
+
+  if (withDeleted) {
+    [...copyMap.entries()].forEach(([filePath, file]) => {
+      stats.push({
+        filePath: file.filePath,
+        isNew: false,
+        isChanged: false,
+        isDeleted: true,
+        localeFileNew: null,
+        localeFileBefore: file,
+      });
+    });
+  }
+
+  return stats;
 }
 
 async function makeOutputDirectory(outputPath: string, clear: boolean) {
@@ -128,7 +166,7 @@ async function makeOutputDirectory(outputPath: string, clear: boolean) {
   }
 }
 
-async function makeSnapshot(path: string, matcher: Matcher) {
+async function getSnapshot(path: string, matcher: Matcher): Promise<Snapshot> {
   const map = new Map<string, LocaleFile>();
 
   const exist = await isAvailableDirectory(path);
@@ -139,44 +177,44 @@ async function makeSnapshot(path: string, matcher: Matcher) {
 
   const files = await scan({
     path,
-    matcher: /.\.json/,
+    matcher,
   });
+
   files.forEach((file) => {
     map.set(file.filePath, file);
   });
+
   return map;
 }
 
-export async function emit(params: EmitterParams) {
-  if (!isRecord(params)) {
-    throw new Error("params argument: should be an object");
+export async function emit(options: EmitterOptions) {
+  if (!isRecord(options)) {
+    throw new Error("options should be an object");
   }
 
-  if (!isCompiledLocales(params.compiled)) {
-    throw new Error(`params.compiled: ${CompiledLocaledTypeDescription}`);
+  if (!isCompiledLocales(options.compiledLocales)) {
+    throw new Error(`compiledLocales: ${CompiledLocalesTypeDescription}`);
   }
 
-  if (!isString(params.outputPath)) {
-    throw new Error("params.outputPath: should be a string");
+  if (!isString(options.outputPath)) {
+    throw new Error("outputPath: should be a string");
   }
 
-  if (!isUndefined(params.clean) && !isBoolean(params.clean)) {
-    throw new Error("params.clean: should be a boolean");
+  if (!isUndefined(options.clear) && !isBoolean(options.clear)) {
+    throw new Error("clear: should be a boolean");
   }
 
-  const clear = isBoolean(params.clean) ? params.clean : false;
+  const clear = isBoolean(options.clear) ? options.clear : false;
 
-  const snapshot = await makeSnapshot(params.outputPath, /.\.json/);
+  const snapshot = await getSnapshot(options.outputPath, /.\.json/);
 
-  await makeOutputDirectory(params.outputPath, clear);
+  await makeOutputDirectory(options.outputPath, clear);
 
-  const savings = Object.keys(params.compiled).map((key) => {
-    const filePath = path.resolve(params.outputPath, key + ".json");
-    const content = Buffer.from(JSON.stringify(params.compiled[key]));
-    return emitFile(filePath, content);
-  });
+  const emitted = await emitFiles(options.compiledLocales, options.outputPath);
 
-  const emitted = await Promise.all(savings);
+  const stats = getStats(snapshot, emitted, clear);
 
-  logCompiledFiles(snapshot, emitted, clear);
+  log(stats);
+
+  return stats;
 }
