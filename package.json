@@ -6,8 +6,8 @@
   "module": "lib/index.mjs",
   "homepage": "https://github.com/gmaxlev/i18n-collector",
   "scripts": {
-    "test": "jest",
-    "test:dev": "jest --watch",
+    "test": "jest --silent",
+    "test:dev": "jest --watch --silent",
     "dev": "nodemon --watch './**/*.ts' --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm' src/index.ts",
     "build:dts": "tsc --declaration --emitDeclarationOnly -p . --outDir dts ",
     "build": "rm -rf dts && npm run build:dts && rollup -c rollup.config.cjs --bundleConfigAsCjs && rm -rf dts"
