@@ -74,33 +74,38 @@ function parseJSON(content: Buffer) {
 }
 
 export function parse(options: ParserOptions): ParseResult {
-  if (!isRecord(options)) {
-    throw new Error("Options should be an object");
+  try {
+    if (!isRecord(options)) {
+      throw new Error("Options should be an object");
+    }
+
+    if (!isString(options.filePath)) {
+      throw new Error("filePath: should be a string");
+    }
+
+    if (!isBuffer(options.fileContent)) {
+      throw new Error("fileContent: should be a Buffer");
+    }
+
+    const parsed = parseJSON(options.fileContent);
+
+    if (parsed === null) {
+      return null;
+    }
+
+    const language = getLanguage(options.filePath);
+    const namespace = getNamespace(parsed);
+    const translations = getTranslations(parsed);
+    const id = options.filePath;
+
+    return {
+      language,
+      namespace,
+      translations,
+      id,
+    };
+  } catch (e) {
+    console.error("Error while parsing file", options?.filePath);
+    throw e;
   }
-
-  if (!isString(options.filePath)) {
-    throw new Error("filePath: should be a string");
-  }
-
-  if (!isBuffer(options.fileContent)) {
-    throw new Error("fileContent: should be a Buffer");
-  }
-
-  const parsed = parseJSON(options.fileContent);
-
-  if (parsed === null) {
-    return null;
-  }
-
-  const language = getLanguage(options.filePath);
-  const namespace = getNamespace(parsed);
-  const translations = getTranslations(parsed);
-  const id = options.filePath;
-
-  return {
-    language,
-    namespace,
-    translations,
-    id,
-  };
 }
