@@ -27,7 +27,7 @@ function getLanguage(filePath: string) {
     result[0][1].trim() === ""
   ) {
     throw new Error(
-      `Filename should contain language code in format "[lang].locale.json"`
+      `Filename  ${filePath} has an invalid name. Filename should contain language code in format "[lang].locale.json"`
     );
   }
 
@@ -47,10 +47,6 @@ function getTranslations(content: object) {
 }
 
 function parseJSON(content: Buffer) {
-  if (!isBuffer(content)) {
-    throw new Error("Content file must be a Buffer");
-  }
-
   if (content.length === 0) {
     return null;
   }
@@ -66,12 +62,12 @@ function parseJSON(content: Buffer) {
   try {
     parsed = JSON.parse(string);
   } catch (e) {
-    console.error("By default localization file must be a valid JSON");
+    console.error("By default locale file must be a valid JSON");
     throw e;
   }
 
   if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    throw new Error("By default localization file must be a valid JSON object");
+    throw new Error("By default locale file must be a valid JSON object");
   }
 
   return parsed;
@@ -79,11 +75,15 @@ function parseJSON(content: Buffer) {
 
 export function parse(options: ParserOptions): ParseResult {
   if (!isRecord(options)) {
-    throw new Error("Options must be an object");
+    throw new Error("Options should be an object");
   }
 
   if (!isString(options.filePath)) {
-    throw new Error("File path must be a string");
+    throw new Error("filePath: should be a string");
+  }
+
+  if (!isBuffer(options.fileContent)) {
+    throw new Error("fileContent: should be a Buffer");
   }
 
   const parsed = parseJSON(options.fileContent);

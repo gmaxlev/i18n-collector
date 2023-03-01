@@ -1,209 +1,306 @@
+import type { ParserOptions } from "./../types";
+import {
+  NOT_RECORD_TYPES,
+  NOT_STRING_TYPES,
+  ALL_TYPES,
+  excludeTypes,
+} from "./utils";
 import { parse } from "../parser";
 
 describe("parser.ts", () => {
-  let correctFilePath = "en.locale.json";
-  let correctFileLang = "en";
+  let correctOptions: ParserOptions;
+
+  beforeEach(() => {
+    correctOptions = {
+      filePath: "en.locale.json",
+      fileContent: Buffer.from(
+        JSON.stringify({
+          namespace: "module",
+          translations: {
+            key: "value",
+          },
+        })
+      ),
+    };
+  });
 
   test("Should throw an error if options is not an object", () => {
-    [null, 7, "2", []].forEach((value) => {
-      // @ts-expect-error
-      expect(() => parse(value)).toThrow("Options must be an object");
-    });
+    for (const options of NOT_RECORD_TYPES) {
+      const act = () => parse(options);
+
+      const result = expect(act);
+
+      result.toThrow("Options should be an object");
+    }
   });
 
-  test("Should throw an error if options.filePath is not a string", () => {
-    [null, 1, {}, []].forEach((value) => {
-      // @ts-expect-error
-      expect(() => parse({ filePath: value })).toThrow(
-        "File path must be a string"
-      );
-    });
+  test('Should throw an error if "filePath" is not a string', () => {
+    for (const value of NOT_STRING_TYPES) {
+      const options: ParserOptions = {
+        ...correctOptions,
+        filePath: value,
+      };
+
+      const act = () => parse(options);
+
+      const result = expect(act);
+
+      result.toThrow("filePath: should be a string");
+    }
   });
 
-  test("Should throw an error if file content is not a Buffer", () => {
-    [null, 1, {}, []].forEach((value) => {
-      expect(() =>
-        // @ts-expect-error
-        parse({ filePath: correctFilePath, fileContent: value })
-      ).toThrow("Content file must be a Buffer");
-    });
+  test('Should throw an error if "fileContent" is not a Buffer', () => {
+    for (const value of ALL_TYPES) {
+      const options: ParserOptions = {
+        ...correctOptions,
+        fileContent: value,
+      };
+
+      const act = () => parse(options);
+
+      const result = expect(act);
+
+      result.toThrow("fileContent: should be a Buffer");
+    }
   });
 
-  test("Should return null if buffer is empty if contains an empty string", () => {
-    [Buffer.from(""), Buffer.from("   "), Buffer.alloc(0)].forEach((value) => {
-      expect(
-        parse({ filePath: correctFilePath, fileContent: value })
-      ).toBeNull();
-    });
+  test("Should return null if buffer is empty", () => {
+    const options: ParserOptions = {
+      ...correctOptions,
+      fileContent: Buffer.alloc(0),
+    };
+
+    const result = parse(options);
+
+    expect(result).toBeNull();
+  });
+
+  test("Should return null if buffer contains an empty string", () => {
+    const options: ParserOptions = {
+      ...correctOptions,
+      fileContent: Buffer.from("    "),
+    };
+
+    const result = parse(options);
+
+    expect(result).toBeNull();
   });
 
   test("Should throw an error if file content is not a valid JSON", () => {
-    const content = Buffer.from("±!@#$%^&*()_+");
-    expect(() =>
-      parse({ filePath: correctFilePath, fileContent: content })
-    ).toThrow();
+    const options: ParserOptions = {
+      ...correctOptions,
+      fileContent: Buffer.from("!_not_valid_json_!"),
+    };
+
+    const act = () => parse(options);
+
+    const result = expect(act);
+
+    result.toThrow();
   });
 
-  test("Should throw an error if parsed JSON is not an object", () => {
-    const content = Buffer.from("±!@#$%^&*()_+");
+  test("Should throw an error if file content does not contain object", () => {
+    const contents = [1, [], null];
 
-    ["1", "[]"].forEach((value) => {
-      expect(() =>
-        parse({ filePath: correctFilePath, fileContent: Buffer.from(value) })
-      ).toThrow("By default localization file must be a valid JSON object");
-    });
+    for (const content of contents) {
+      const options: ParserOptions = {
+        ...correctOptions,
+        fileContent: Buffer.from(JSON.stringify(content)),
+      };
+
+      const act = () => parse(options);
+
+      const result = expect(act);
+
+      result.toThrow("By default locale file must be a valid JSON object");
+    }
   });
 
-  test("Should throw an error if file name does not contain a language", () => {
-    const content = Buffer.from('{"translations": {}}');
-
-    [
+  test("Should throw error if filename does not match pattern", () => {
+    const invalidFileNames = [
       "",
-      " ",
-      ".",
-      "json",
-      ".json",
+      "  ",
+      "a",
+      "a.a",
+      "a json",
       "locale.json",
       ".locale.json",
-      " .locale.json",
-    ].forEach((wrongFileName) => {
-      expect(() =>
-        parse({ filePath: wrongFileName, fileContent: content })
-      ).toThrow(
-        'Filename should contain language code in format "[lang].locale.json"'
+      "uk.locale.xml",
+    ];
+
+    for (const fileName of invalidFileNames) {
+      const options: ParserOptions = {
+        ...correctOptions,
+        filePath: fileName,
+      };
+
+      const act = () => parse(options);
+
+      const result = expect(act);
+
+      result.toThrow(
+        `Filename should contain language code in format "[lang].locale.json"`
       );
-    });
+    }
   });
 
-  describe.each`
-    filename               | language
-    ${"en.locale.json"}    | ${"en"}
-    ${"uk.locale.json"}    | ${"uk"}
-    ${"a.b.c.locale.json"} | ${"a.b.c"}
-  `(`$filename and $language`, ({ filename, language }) => {
-    test("Should return language code", () => {
-      const content = Buffer.from('{"translations": {}}');
+  test("Should return language from filename", () => {
+    const validFilePaths = {
+      "en.locale.json": "en",
+      "en-US.locale.json": "en-US",
+      "en-us.locale.json": "en-us",
+      "uk.locale.json": "uk",
+      "a.b.c.d.locale.json": "a.b.c.d",
+    };
 
-      const result = parse({ filePath: filename, fileContent: content });
+    const keys = Object.keys(validFilePaths) as Array<
+      keyof typeof validFilePaths
+    >;
+
+    for (const filePath of keys) {
+      const options: ParserOptions = {
+        ...correctOptions,
+        filePath,
+        fileContent: Buffer.from(
+          JSON.stringify({
+            translations: {
+              key: "value",
+            },
+          })
+        ),
+      };
+
+      const result = parse(options);
 
       expect(result).toEqual({
-        id: filename,
-        language,
+        language: (validFilePaths as any)[filePath],
         namespace: undefined,
-        translations: {},
+        translations: { key: "value" },
+        id: filePath,
       });
-    });
+    }
   });
 
-  test("Should throw an error if namespace is not a string", () => {
-    [1, {}, [], null].forEach((namespace) => {
-      const fineContent = {
-        translations: {},
-        namespace,
-      };
-
-      const act = () =>
-        parse({
-          filePath: correctFilePath,
-          fileContent: Buffer.from(JSON.stringify(fineContent)),
-        });
-
-      expect(act).toThrow("Namespace must be a string");
-    });
-  });
-
-  test("Should return namespace as undefined if it is not specified", () => {
-    const fineContent = {
-      translations: {},
+  test("Should return 'undefined' namespace if it is not specified in file", () => {
+    const options: ParserOptions = {
+      ...correctOptions,
+      fileContent: Buffer.from(
+        JSON.stringify({
+          translations: {
+            key: "value",
+          },
+        })
+      ),
     };
 
-    const result = parse({
-      filePath: correctFilePath,
-      fileContent: Buffer.from(JSON.stringify(fineContent)),
-    });
+    const result = parse(options);
 
     expect(result).toEqual({
-      id: correctFilePath,
-      language: correctFileLang,
+      language: "en",
       namespace: undefined,
-      translations: {},
+      translations: { key: "value" },
+      id: "en.locale.json",
     });
   });
 
-  test("Should return namespace if it is specified", () => {
-    const fineContent = {
-      translations: {},
-      namespace: "test",
+  test("Should return provided namespace", () => {
+    const options: ParserOptions = {
+      ...correctOptions,
+      fileContent: Buffer.from(
+        JSON.stringify({
+          namespace: "_provided_namespace_",
+          translations: {
+            key: "value",
+          },
+        })
+      ),
     };
 
-    const result = parse({
-      filePath: correctFilePath,
-      fileContent: Buffer.from(JSON.stringify(fineContent)),
-    });
+    const result = parse(options);
 
     expect(result).toEqual({
-      id: correctFilePath,
-      language: correctFileLang,
-      namespace: "test",
-      translations: {},
+      language: "en",
+      namespace: "_provided_namespace_",
+      translations: { key: "value" },
+      id: "en.locale.json",
     });
   });
 
-  test("Should throw error if translations is not an object", () => {
-    [1, "2", null, []].forEach((translations) => {
-      const fineContent = {
-        namespace: "test",
-        translations,
+  test("Should return an empty translations if translations are not specified", () => {
+    const options: ParserOptions = {
+      ...correctOptions,
+      filePath: "/src/en.locale.json",
+      fileContent: Buffer.from(
+        JSON.stringify({
+          namespace: "_provided_namespace_",
+        })
+      ),
+    };
+
+    const result = parse(options);
+
+    expect(result).toEqual({
+      language: "en",
+      namespace: "_provided_namespace_",
+      translations: {},
+      id: "/src/en.locale.json",
+    });
+  });
+
+  test("Should throw an error if translations are not an object", () => {
+    const invalidContent = [1, null, []];
+
+    for (const content of invalidContent) {
+      const options: ParserOptions = {
+        ...correctOptions,
+        fileContent: Buffer.from(
+          JSON.stringify({
+            translations: content,
+          })
+        ),
       };
 
-      const act = () =>
-        parse({
-          filePath: correctFilePath,
-          fileContent: Buffer.from(JSON.stringify(fineContent)),
-        });
+      const act = () => parse(options);
 
       expect(act).toThrow("Translations must be an object");
-    });
+    }
   });
 
-  test("Should return translations as an empty object if it is not specified", () => {
-    const fineContent = {
-      namespace: "test",
+  test("Should return correct result", () => {
+    const options: ParserOptions = {
+      ...correctOptions,
+      filePath: "/src/module/en-US.locale.json",
+      fileContent: Buffer.from(
+        JSON.stringify({
+          namespace: "_provided_namespace_",
+          translations: {
+            key: "value",
+            nestedObject: {
+              _key_: "_value_",
+              nestedObject2: {
+                __key__: "__value__",
+              },
+            },
+          },
+        })
+      ),
     };
 
-    const result = parse({
-      filePath: correctFilePath,
-      fileContent: Buffer.from(JSON.stringify(fineContent)),
-    });
+    const result = parse(options);
 
     expect(result).toEqual({
-      id: correctFilePath,
-      language: correctFileLang,
-      namespace: "test",
-      translations: {},
-    });
-  });
-
-  test("Should return translations if it is specified", () => {
-    const fineContent = {
-      namespace: "test",
+      language: "en-US",
+      namespace: "_provided_namespace_",
       translations: {
         key: "value",
+        nestedObject: {
+          _key_: "_value_",
+          nestedObject2: {
+            __key__: "__value__",
+          },
+        },
       },
-    };
-
-    const result = parse({
-      filePath: correctFilePath,
-      fileContent: Buffer.from(JSON.stringify(fineContent)),
-    });
-
-    expect(result).toEqual({
-      id: correctFilePath,
-      language: correctFileLang,
-      namespace: "test",
-      translations: {
-        key: "value",
-      },
+      id: "/src/module/en-US.locale.json",
     });
   });
 });
