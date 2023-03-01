@@ -33,3 +33,4 @@ export const NOT_SYMBOL_TYPES = excludeTypes(["symbol"]);
 export const NOT_RECORD_TYPES = excludeTypes(["record"]);
 export const NOT_FUNCTION_TYPES = excludeTypes(["function"]);
 export const NOT_ARRAY_TYPES = excludeTypes(["array"]);
+export const ALL_TYPES = excludeTypes([]);
