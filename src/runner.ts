@@ -116,7 +116,7 @@ export async function run(options: RunnerOptions) {
 
   const now = performance.now();
 
-  console.log("💫 Starting localization collector");
+  console.log(`💫 Starting i18n-collector`);
 
   const files = await scan({
     path: validOptions.inputPath,

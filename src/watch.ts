@@ -63,7 +63,7 @@ export async function watch(options: RunnerOptions) {
 
       planned = true;
 
-      console.log("\n👀 Detected changes in localization files");
+      console.log("\n👀 Detected changes in locales");
 
       setTimeout(() => {
         planned = false;
