@@ -2,7 +2,7 @@ import { scan } from "./scan";
 import { compile, CompilerOptions } from "./compiler";
 import { defaultMatcher } from "./constants";
 import { emit } from "./emitter";
-import { isAvailableDirectory, useMatcher } from "./utils";
+import { isAvailableDirectory } from "./utils";
 import type { Matcher, ParserFunction } from "./types";
 import {
   isMatcher,
@@ -16,14 +16,15 @@ import {
 } from "./types";
 import { parse } from "./parser";
 
+// watch  // ok
 export interface RunnerOptions {
-  outputPath: string;
-  inputPath?: string;
-  merge?: boolean;
-  matcher?: Matcher;
-  recursive?: boolean;
-  clear?: boolean;
-  parser?: ParserFunction;
+  outputPath: string; // ok
+  inputPath?: string; // ok
+  merge?: boolean; // ok
+  matcher?: Matcher; // ok only regex
+  recursive?: boolean; // ok
+  clear?: boolean; // ok
+  parser?: ParserFunction; // -----
   defaultNamespace?: string;
 }
 
@@ -125,17 +126,6 @@ export async function run(options: RunnerOptions) {
 
   if (!files.length) {
     console.warn(`\n🛑 No files found in ${validOptions.inputPath}`);
-
-    if (validOptions.matcher) {
-      console.info(`ℹ️ Files should math the provided "matcher" function`);
-    } else {
-      console.info(
-        `ℹ️ By default files should math the pattern ${defaultMatcher}`
-      );
-      console.info(
-        `ℹ️ If you have special files naming, you can pass custom matcher using JS API.\n`
-      );
-    }
     return [];
   }
 

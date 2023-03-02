@@ -40,7 +40,7 @@ function getTranslations(content: object) {
   }
 
   if (!isRecord(content.translations)) {
-    throw new Error("Translations must be an object");
+    throw new Error(`"translations" must be an object`);
   }
 
   return content.translations as object;

@@ -15,7 +15,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "devDependencies": {
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.1",
@@ -32,6 +31,7 @@
     "memfs": "^3.4.13",
     "nodemon": "^2.0.20",
     "prettier": "2.8.4",
+    "rollup": "^3.18.0",
     "rollup-plugin-dts": "^5.2.0",
     "rollup-plugin-filesize": "^9.1.2",
     "rollup-plugin-typescript2": "^0.34.1",
@@ -41,7 +41,6 @@
   },
   "dependencies": {
     "commander": "^10.0.0",
-    "filesize": "^10.0.6",
-    "rollup": "^3.17.2"
+    "filesize": "^10.0.6"
   }
 }

@@ -6,7 +6,6 @@ import { isEnoentError } from "./types";
 
 export async function watch(options: RunnerOptions) {
   const validOptions = validateRunnerOptions(options);
-  await run(validOptions);
 
   let planned = false;
   let processing = false;
@@ -72,4 +71,6 @@ export async function watch(options: RunnerOptions) {
       });
     }
   );
+
+  await runInWatchContext();
 }

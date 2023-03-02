@@ -27,7 +27,7 @@ export interface EmitterOptions {
 
 type Snapshot = Map<string, LocaleFile>;
 
-interface Stats {
+export interface Stats {
   filePath: string;
   isNew: boolean;
   isChanged: boolean;

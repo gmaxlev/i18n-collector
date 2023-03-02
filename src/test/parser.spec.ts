@@ -262,7 +262,7 @@ describe("parser.ts", () => {
 
       const act = () => parse(options);
 
-      expect(act).toThrow("Translations must be an object");
+      expect(act).toThrow(`"translations" must be an object`);
     }
   });
 
