@@ -1,216 +1,168 @@
-import fs from "fs";
-import path from "path";
 import { scan } from "./scan";
-import { compile } from "./compiler";
+import { compile, CompilerOptions } from "./compiler";
 import { defaultMatcher } from "./constants";
 import { emit } from "./emitter";
 import { isAvailableDirectory, useMatcher } from "./utils";
-import type { Matcher } from "./types";
+import type { Matcher, ParserFunction } from "./types";
 import {
   isMatcher,
   MatcherTypeDescription,
   isBoolean,
-  isEnoentError,
   isRecord,
   isString,
   isUndefined,
+  isParserFunction,
+  ParserFunctionTypeDescription,
 } from "./types";
+import { parse } from "./parser";
 
 export interface RunnerOptions {
   outputPath: string;
   inputPath?: string;
   merge?: boolean;
   matcher?: Matcher;
-  watch?: boolean;
   recursive?: boolean;
   clear?: boolean;
+  parser?: ParserFunction;
+  defaultNamespace?: string;
 }
 
-function validateRunnerOptions(params: RunnerOptions) {
-  if (!isRecord(params)) {
+export interface ValidRunnerOptions {
+  outputPath: string;
+  inputPath: string;
+  merge: boolean;
+  matcher: Matcher;
+  recursive: boolean;
+  clear: boolean;
+  parser: ParserFunction;
+  defaultNamespace?: string;
+}
+
+export function validateRunnerOptions(
+  options: RunnerOptions
+): ValidRunnerOptions {
+  if (!isRecord(options)) {
     throw new TypeError("params should be an object");
   }
 
-  if (!isString(params.outputPath)) {
-    throw new TypeError("params.outputPath should be a string");
+  if (!isString(options.outputPath)) {
+    throw new TypeError("outputPath: should be a string");
   }
 
-  if (!isUndefined(params.merge) && !isBoolean(params.merge)) {
-    throw new TypeError("params.merge should be a boolean");
+  if (!isUndefined(options.merge) && !isBoolean(options.merge)) {
+    throw new TypeError("merge: should be a boolean");
   }
 
-  if (!isUndefined(params.matcher) && !isMatcher(params.matcher)) {
-    throw new TypeError(`params.matcher: ${MatcherTypeDescription}`);
+  if (!isUndefined(options.matcher) && !isMatcher(options.matcher)) {
+    throw new TypeError(`matcher: ${MatcherTypeDescription}`);
   }
 
-  if (!isUndefined(params.watch) && !isBoolean(params.watch)) {
-    throw new TypeError("params.watch should be a boolean");
+  if (!isUndefined(options.recursive) && !isBoolean(options.recursive)) {
+    throw new TypeError("recursive: should be a boolean");
   }
 
-  if (!isUndefined(params.recursive) && !isBoolean(params.recursive)) {
-    throw new TypeError("params.recursive should be a boolean");
+  if (!isUndefined(options.inputPath) && !isString(options.inputPath)) {
+    throw new TypeError("inputPath: should be a string");
   }
 
-  if (!isUndefined(params.inputPath) && !isString(params.inputPath)) {
-    throw new TypeError("params.inputPath should be a string");
-  }
-}
-
-async function watch(params: {
-  outputPath: string;
-  inputPath: string;
-  merge: boolean;
-  recursive: boolean;
-  matcher: Matcher;
-  clear: boolean;
-}) {
-  let planned = false;
-  let processing = false;
-  const latestContents = new Map<string, Buffer>();
-
-  async function runInWatchContext() {
-    if (processing) {
-      planned = true;
-      return;
-    }
-
-    processing = true;
-
-    try {
-      await processLocales(params);
-    } catch (e) {
-      console.error("Error during localization collector execution", e);
-    } finally {
-      processing = false;
-      if (planned) {
-        planned = false;
-        runInWatchContext();
-      }
-    }
+  if (!isUndefined(options.parser) && !isParserFunction(options.parser)) {
+    throw new TypeError(`parser: ${ParserFunctionTypeDescription}`);
   }
 
-  fs.watch(
-    params.inputPath,
-    { recursive: params.recursive },
-    async (_event, filename) => {
-      if (planned || !(await useMatcher(params.matcher, filename))) {
-        return;
-      }
-
-      // since event can be triggered for not only changed files
-      // we need to save its content and compare it with the next one
-      const filePath = path.join(params.inputPath, filename);
-      let content: Buffer;
-
-      try {
-        content = fs.readFileSync(filePath);
-      } catch (e) {
-        latestContents.delete(filePath);
-        if (!isEnoentError) {
-          throw e;
-        }
-        return;
-      }
-
-      const exist = latestContents.get(filePath);
-      if (exist && exist.equals(content)) {
-        return;
-      }
-      latestContents.set(filePath, content);
-
-      planned = true;
-
-      console.log("\n👀 Detected changes in localization files");
-
-      setTimeout(() => {
-        planned = false;
-        runInWatchContext();
-      });
-    }
-  );
-
-  await runInWatchContext();
-}
-
-async function processLocales(params: {
-  outputPath: string;
-  inputPath: string;
-  merge: boolean;
-  recursive: boolean;
-  matcher: Matcher;
-  clear: boolean;
-}) {
-  const now = performance.now();
-
-  console.log("💫 Starting localization collector");
-
-  const files = await scan({
-    path: params.inputPath,
-    matcher: params.matcher,
-    recursive: params.recursive,
-  });
-
-  if (!files.length) {
-    console.warn(`\n🛑 No files found in ${params.inputPath}`);
-    console.info(
-      `ℹ️ By default files should math the pattern ${defaultMatcher}`
-    );
-    console.info(
-      `ℹ️ If you have special files naming, you can pass custom matcher using JS API.\n`
-    );
-    return;
+  if (
+    !isUndefined(options.defaultNamespace) &&
+    !isString(options.defaultNamespace)
+  ) {
+    throw new TypeError("defaultNamespace: should be a string");
   }
 
-  console.log("📝 Found", files.length, "files to process");
+  const inputPath = options.inputPath || process.cwd();
+  const merge = isBoolean(options.merge) ? options.merge : false;
+  const clear = isBoolean(options.clear) ? options.clear : false;
+  const recursive = isBoolean(options.recursive) ? options.recursive : true;
+  const matcher = isMatcher(options.matcher) ? options.matcher : defaultMatcher;
+  const parser = isParserFunction(options.parser) ? options.parser : parse;
 
-  const compiledLocales = await compile({ files });
+  const validOptions: ValidRunnerOptions = {
+    outputPath: options.outputPath,
+    inputPath,
+    merge,
+    matcher,
+    recursive,
+    clear,
+    parser,
+  };
 
-  await emit({
-    compiledLocales,
-    outputPath: params.outputPath,
-    clear: params.clear,
-  });
+  if (isString(options.defaultNamespace)) {
+    validOptions.defaultNamespace = options.defaultNamespace;
+  }
 
-  console.log("🏁 Finished in", performance.now() - now, "ms");
+  return validOptions;
 }
 
 export async function run(options: RunnerOptions) {
   validateRunnerOptions(options);
 
-  const inputPath = options.inputPath || process.cwd();
+  const validOptions = validateRunnerOptions(options);
 
-  const inputPathExists = await isAvailableDirectory(inputPath);
+  const inputPathExists = await isAvailableDirectory(validOptions.inputPath);
 
   if (!inputPathExists) {
-    console.log(
-      `\n🛑 Provided input path ${inputPath} does not exist or it is not a directory`
+    throw new Error(
+      `inputPath "${validOptions.inputPath}" does not exist or it is not a directory`
     );
-    console.info(`ℹ️  Check it and try again\n`);
-    return;
   }
 
-  const merge = isBoolean(options.merge) ? options.merge : false;
-  const clear = isBoolean(options.clear) ? options.clear : false;
-  const recursive = isBoolean(options.recursive) ? options.recursive : true;
-  const matcher = options.matcher || defaultMatcher;
+  const now = performance.now();
 
-  if (options.watch) {
-    watch({
-      outputPath: options.outputPath,
-      inputPath,
-      merge,
-      recursive,
-      matcher,
-      clear,
-    });
-  } else {
-    await processLocales({
-      outputPath: options.outputPath,
-      inputPath,
-      merge,
-      recursive,
-      matcher,
-      clear,
-    });
+  console.log("💫 Starting localization collector");
+
+  const files = await scan({
+    path: validOptions.inputPath,
+    matcher: validOptions.matcher,
+    recursive: validOptions.recursive,
+  });
+
+  if (!files.length) {
+    console.warn(`\n🛑 No files found in ${validOptions.inputPath}`);
+
+    if (validOptions.matcher) {
+      console.info(`ℹ️ Files should math the provided "matcher" function`);
+    } else {
+      console.info(
+        `ℹ️ By default files should math the pattern ${defaultMatcher}`
+      );
+      console.info(
+        `ℹ️ If you have special files naming, you can pass custom matcher using JS API.\n`
+      );
+    }
+    return [];
   }
+
+  console.log("📝 Found", files.length, "files to process");
+
+  let compilerOptions: CompilerOptions = {
+    merge: validOptions.merge,
+    parser: validOptions.parser,
+    files,
+  };
+
+  if (options.defaultNamespace) {
+    compilerOptions = {
+      ...compilerOptions,
+      defaultNamespace: options.defaultNamespace,
+    };
+  }
+
+  const compiledLocales = await compile(compilerOptions);
+
+  const stats = await emit({
+    outputPath: options.outputPath,
+    clear: validOptions.clear,
+    compiledLocales,
+  });
+
+  console.log("🏁 Finished in", performance.now() - now, "ms");
+
+  return stats;
 }
