@@ -61,6 +61,11 @@ function log(stats: Stats[]) {
         `${fileNameLog} ${changedLog} ${sizeBeforeLog} ${dividerLog} ${sizeAfterLog}`
       );
     } else if (item.isDeleted) {
+      const unchangedLog = chalk.bgRed("deleted");
+      const fileSize = Number(item.localeFileBefore?.bytes);
+      const sizeLog = chalk.white(getStringFilesize(fileSize));
+      console.log(`${fileNameLog} ${unchangedLog} ${sizeLog}`);
+    } else {
       const unchangedLog = chalk.bgGrey("unchanged");
       const fileSize = Number(item.localeFileBefore?.bytes);
       const sizeLog = chalk.white(getStringFilesize(fileSize));
