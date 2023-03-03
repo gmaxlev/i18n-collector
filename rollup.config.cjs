@@ -41,7 +41,7 @@ module.exports = [
     external: [...base.external, "commander"],
     output: [
       {
-        file: "bin/bin.js",
+        file: "lib/cli.js",
         banner: "#!/usr/bin/env node",
         format: "cjs",
       },

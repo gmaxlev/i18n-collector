@@ -1,20 +1,35 @@
 {
   "name": "i18n-collector",
   "version": "0.0.1",
-  "description": "",
-  "main": "lib/index.js",
-  "module": "lib/index.mjs",
+  "description": "Tool for bundling localization files",
+  "main": "./lib/index.js",
+  "module": "./lib/index.mjs",
+  "keywords": [
+    "l10n",
+    "i18n",
+    "i18next",
+    "internationalization",
+    "translation",
+    "localization",
+    "globalization"
+  ],
   "homepage": "https://github.com/gmaxlev/i18n-collector",
-  "scripts": {
-    "test": "jest --silent",
-    "test:dev": "jest --watch --silent",
-    "dev": "nodemon --watch './**/*.ts' --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm' src/index.ts",
-    "build:dts": "tsc --declaration --emitDeclarationOnly -p . --outDir dts ",
-    "build": "rm -rf dts && npm run build:dts && rollup -c rollup.config.cjs --bundleConfigAsCjs && rm -rf dts"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gmaxlev/i18n-collector.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "bugs": "https://github.com/gmaxlev/i18n-collector/issues",
+  "author": "Maksym Levytskyi https://github.com/gmaxlev",
+  "license": "MIT",
+  "scripts": {
+    "test": "npm run prettier && npm run lint && jest --silent",
+    "test:watch": "jest --watch --silent",
+    "dev": "nodemon --watch './**/*.ts' --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm' src/index.ts",
+    "build:dts": "tsc --declaration --emitDeclarationOnly -p . --outDir dts",
+    "build": "rm -rf lib && rm -rf dts && npm run build:dts && rollup -c rollup.config.cjs --bundleConfigAsCjs && rm -rf dts",
+    "lint": "eslint .",
+    "prettier": "prettier --check ."
+  },
   "devDependencies": {
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.1",
