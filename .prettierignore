@@ -1,0 +1,5 @@
+.husky
+__mocks__
+coverage
+lib
+.prettierignore

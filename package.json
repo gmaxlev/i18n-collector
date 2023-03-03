@@ -22,13 +22,21 @@
   "author": "Maksym Levytskyi https://github.com/gmaxlev",
   "license": "MIT",
   "scripts": {
-    "test": "npm run prettier && npm run lint && jest --silent",
-    "test:watch": "jest --watch --silent",
+    "test": "npm run prettier && npm run lint && jest . --silent",
+    "test:watch": "jest . --watch --silent",
     "dev": "nodemon --watch './**/*.ts' --exec 'node --experimental-specifier-resolution=node --loader ts-node/esm' src/index.ts",
     "build:dts": "tsc --declaration --emitDeclarationOnly -p . --outDir dts",
     "build": "rm -rf lib && rm -rf dts && npm run build:dts && rollup -c rollup.config.cjs --bundleConfigAsCjs && rm -rf dts",
     "lint": "eslint .",
-    "prettier": "prettier --check ."
+    "prettier": "prettier --check .",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*": [
+      "eslint --fix .",
+      "prettier --write .",
+      "npm run test"
+    ]
   },
   "devDependencies": {
     "@rollup/plugin-json": "^6.0.0",
@@ -42,7 +50,9 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-n": "^15.6.1",
     "eslint-plugin-promise": "^6.1.1",
+    "husky": "^8.0.3",
     "jest": "^29.4.3",
+    "lint-staged": "^13.1.2",
     "memfs": "^3.4.13",
     "nodemon": "^2.0.20",
     "prettier": "2.8.4",
