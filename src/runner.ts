@@ -15,16 +15,16 @@ import {
   ParserFunctionTypeDescription,
 } from "./types";
 import { parse } from "./parser";
+import { performance } from "perf_hooks";
 
-// watch  // ok
 export interface RunnerOptions {
-  outputPath: string; // ok
-  inputPath?: string; // ok
-  merge?: boolean; // ok
-  matcher?: Matcher; // ok only regex
-  recursive?: boolean; // ok
-  clear?: boolean; // ok
-  parser?: ParserFunction; // -----
+  outputPath: string;
+  inputPath?: string;
+  merge?: boolean;
+  matcher?: Matcher;
+  recursive?: boolean;
+  clear?: boolean;
+  parser?: ParserFunction;
   defaultNamespace?: string;
 }
 
