@@ -36,10 +36,14 @@ export interface Stats {
   localeFileBefore: LocaleFile | null;
 }
 
-function log(stats: Stats[]) {
+function log(outputPath: string, stats: Stats[]) {
+  console.log(`\n📁 Compiled files in ${chalk.blue.bold(outputPath.trim())}:`);
+
   stats.forEach((item, index) => {
     const relativePath = path.basename(item.filePath);
-    const fileNameLog = chalk.white.bold(`${index + 1}. ${relativePath}`);
+    const fileNameLog = `${chalk.white.bold(`${index + 1}`)}. ${chalk.blue.bold(
+      relativePath
+    )}`;
 
     if (item.isNew) {
       const newLog = chalk.bgGreenBright("new");
@@ -192,6 +196,23 @@ async function getSnapshot(path: string, matcher: Matcher): Promise<Snapshot> {
   return map;
 }
 
+/**
+ * Emit compiled locales to files
+ * @param options Options
+ * @param options.compiledLocales Compiled locales
+ * @param options.outputPath Output path
+ * @param options.clear Clear output path before emit
+ *
+ * @example
+ * const compiledLocales = await compile(...);
+ * await emit({
+ *     compiledLocales,
+ *     outputPath: "./locales",
+ *     clear: true,
+ * })
+ *
+ * @returns Array of changed files
+ */
 export async function emit(options: EmitterOptions) {
   if (!isRecord(options)) {
     throw new Error("options should be an object");
@@ -219,7 +240,7 @@ export async function emit(options: EmitterOptions) {
 
   const stats = getStats(snapshot, emitted, clear);
 
-  log(stats);
+  log(options.outputPath, stats);
 
   return stats;
 }

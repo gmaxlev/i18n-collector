@@ -75,6 +75,22 @@ function validateOptions(options: ScanOptions) {
   }
 }
 
+/**
+ * Scans the directory for specified files
+ * @param options Options
+ * @param options.path The path to the directory to scan
+ * @param options.matcher The matcher to use to filter files
+ * @param options.recursive Whether to scan the directory recursively
+ *
+ * @example
+ * scan({
+ *     path: "./src",
+ *     matcher: /.+\.locale\.json/,
+ *     recursive: true
+ * })
+ *
+ * @returns the list of files
+ */
 export async function scan(options: ScanOptions) {
   try {
     validateOptions(options);

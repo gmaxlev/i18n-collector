@@ -4,6 +4,19 @@ import { useMatcher } from "./utils";
 import path from "path";
 import { isEnoentError } from "./types";
 
+/**
+ * The same as {@link run} but watch for changes in input directory
+ *
+ * @param options Options
+ * @param options.outputPath The path to the directory where to write the compiled files
+ * @param options.inputPath The path to the directory where to scan for files to compile
+ * @param options.merge If true, the locales with the same namespace from different files will be merged. Default: false
+ * @param options.matcher The matcher to use to find locale files
+ * @param options.recursive If true, the scan will be recursive. Default: true
+ * @param options.clear If true, the output directory will be cleared before writing the compiled files. Default: false
+ * @param options.parser The parser to use to parse the locale files
+ * @param options.defaultNamespace The default namespace to use if not specified in the file
+ */
 export async function watch(options: RunnerOptions) {
   const validOptions = validateRunnerOptions(options);
 

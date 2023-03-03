@@ -39,7 +39,7 @@ describe("Utils", () => {
       );
       expect(result2).toBe(false);
     });
-    test("Should throw an error is funtion returns not boolean", async () => {
+    test("Should throw an error is function returns not boolean", async () => {
       const act = () =>
         useMatcher(
           // @ts-expect-error

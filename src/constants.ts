@@ -1,1 +1,1 @@
-export const defaultMatcher = /.*\.locale\.json/;
+export const defaultMatcher = /.+\.locale\.json/;

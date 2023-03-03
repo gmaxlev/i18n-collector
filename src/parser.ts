@@ -6,7 +6,7 @@ function getNamespace(content: object) {
   let namespace: string | undefined = undefined;
 
   if ("namespace" in content) {
-    if (typeof content.namespace !== "string") {
+    if (!isString(content.namespace)) {
       throw new TypeError("Namespace must be a string");
     }
     namespace = content.namespace;
@@ -23,7 +23,7 @@ function getLanguage(filePath: string) {
   if (
     result.length === 0 ||
     !Array.isArray(result[0]) ||
-    typeof result[0][1] !== "string" ||
+    !isString(result[0][1]) ||
     result[0][1].trim() === ""
   ) {
     throw new Error(
@@ -66,7 +66,7 @@ function parseJSON(content: Buffer) {
     throw e;
   }
 
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+  if (!isRecord(parsed)) {
     throw new Error("By default locale file must be a valid JSON object");
   }
 

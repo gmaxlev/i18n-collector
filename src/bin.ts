@@ -18,14 +18,14 @@ program
   .option("-w, --watch [value]", "watch mode", parseBooleanInput, false)
   .option(
     "-r, --recursive [value]",
-    "scan all subdirectories",
+    "whether to scan the directory recursively",
     parseBooleanInput,
     true
   )
   .option("-c, --clear [value]", "clear output path", parseBooleanInput, false)
   .option(
     "-m, --merge [value]",
-    "allow merging the same namespaces from different files",
+    "allow merging the same namespace from different files",
     parseBooleanInput,
     false
   )
@@ -33,8 +33,10 @@ program
   .option("-i, --input <value>", "input path")
   .option("-g, --matcher <value>", "RegExp to match locales files")
   .action(async (output, options) => {
-    // ! IMPORTANT
-    // That options must contain only required options and options with default values
+    // ⛔️ IMPORTANT
+    // output and options have "any" type
+    // This options must contain only required options and options with default values
+    // to avoid type errors do not rely on typescript to check this
     const runnerOptions: runner.RunnerOptions = {
       outputPath: output,
       recursive: options.recursive,

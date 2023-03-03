@@ -24,7 +24,6 @@
     "allowJs": true,
     "checkJs": true,
     "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "removeComments": true
+    "resolveJsonModule": true
   }
 }

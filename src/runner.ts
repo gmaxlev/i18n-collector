@@ -16,6 +16,7 @@ import {
 } from "./types";
 import { parse } from "./parser";
 import { performance } from "perf_hooks";
+import chalk from "chalk";
 
 export interface RunnerOptions {
   outputPath: string;
@@ -101,6 +102,34 @@ export function validateRunnerOptions(
   return validOptions;
 }
 
+/**
+ * Default runner
+ * If you need to specific pipeline, you can use our JS API
+ *
+ * @param options Options
+ * @param options.outputPath The path to the directory where to write the compiled files
+ * @param options.inputPath The path to the directory where to scan for files to compile
+ * @param options.merge If true, the locales with the same namespace from different files will be merged. Default: false
+ * @param options.matcher The matcher to use to find locale files
+ * @param options.recursive If true, the scan will be recursive. Default: true
+ * @param options.clear If true, the output directory will be cleared before writing the compiled files. Default: false
+ * @param options.parser The parser to use to parse the locale files
+ * @param options.defaultNamespace The default namespace to use if not specified in the file
+ *
+ * @example
+ * await run({
+ *     outputPath: './locales',
+ *     inputPath: './src',
+ *     merge: true,
+ *     matcher: /.+\.locale\.json$/,
+ *     recursive: true,
+ *     clear: true,
+ *     parser: customParserFunction,
+ *     defaultNamespace: 'common'
+ * })
+ *
+ * @returns The stats of the emitted files
+ */
 export async function run(options: RunnerOptions) {
   validateRunnerOptions(options);
 
@@ -129,7 +158,11 @@ export async function run(options: RunnerOptions) {
     return [];
   }
 
-  console.log("📝 Found", files.length, "files to process");
+  console.log(
+    `📝 Found ${chalk.yellow(files.length)} files in ${chalk.blue.bold(
+      validOptions.inputPath
+    )} to process`
+  );
 
   let compilerOptions: CompilerOptions = {
     merge: validOptions.merge,

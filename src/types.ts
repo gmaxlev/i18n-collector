@@ -1,3 +1,8 @@
+/**
+ * Use this type guards to check primitive and core types
+ * Because library has many type checks it is better to read
+ */
+
 export function isNumber(value: unknown): value is number {
   return typeof value === "number";
 }
@@ -30,6 +35,10 @@ export function isEnoentError(value: unknown): value is NodeJS.ErrnoException {
   return isRecord(value) && value["code"] === "ENOENT";
 }
 
+/**
+ * Some function can be sync or async, and it is better to use this type
+ */
+
 export type MayAsync<T extends (...args: any[]) => unknown> =
   | T
   | ((...args: Parameters<T>) => Promise<ReturnType<T>>);
@@ -42,7 +51,8 @@ export function isMatcher(value: unknown): value is Matcher {
   return value instanceof RegExp || typeof value === "function";
 }
 
-export const MatcherTypeDescription = "Matcher must be a RegExp or function";
+export const MatcherTypeDescription =
+  "Matcher should be a RegExp or (fileName: string) => boolean";
 
 /** Namespace Type */
 
@@ -53,7 +63,7 @@ export function isLocaleNamespace(value: unknown): value is LocaleNamespace {
 }
 
 export const LocaleNamespaceTypeDescription =
-  "LocaleNamespace must be a string";
+  "LocaleNamespace should be a string";
 
 /** LocaleFile Type */
 
@@ -85,8 +95,8 @@ export function isLocaleFile(value: unknown): value is LocaleFile {
   return true;
 }
 
-export const localeFileTypeDescription =
-  "LoadedFile must be an object { filePath: string, content: Buffer, bytes: number }";
+export const LocaleFileTypeDescription =
+  "LoadedFile should be { filePath: string, content: Buffer, bytes: number }";
 
 export type LocaleFiles = LocaleFile[];
 
@@ -95,7 +105,7 @@ export function isLocaleFiles(value: unknown): value is LocaleFile[] {
 }
 
 export const LocaleFilesTypeDescription =
-  "LoadedFiles must be an array of { filePath: string, content: Buffer, bytes: number }";
+  "LoadedFiles should be Array<{ filePath: string, content: Buffer, bytes: number }>";
 
 /** ParserFunction Type */
 
@@ -111,7 +121,7 @@ export function isParserFunction(value: unknown): value is ParserFunction {
 }
 
 export const ParserFunctionTypeDescription =
-  "ParserFunction must be a function";
+  "ParserFunction should be (options: ParserOptions) => ParseResult";
 
 /** ParseResult Type */
 
@@ -145,7 +155,7 @@ export function isParseResult(value: unknown): value is ParseResult {
     return false;
   }
 
-  if (!isUndefined(namespace) && typeof namespace !== "string") {
+  if (!isUndefined(namespace) && !isLocaleNamespace(namespace)) {
     return false;
   }
 
@@ -153,7 +163,7 @@ export function isParseResult(value: unknown): value is ParseResult {
 }
 
 export const ParseResultTypeDescription =
-  "ParseResult must be an object { language: string, translations?: object, namespace?: string, id: unknown } or null";
+  "ParseResult should be { language: string, translations?: object, namespace?: string, id: unknown } or null";
 
 /** CompiledLocales Type */
 
@@ -174,4 +184,4 @@ export function isCompiledLocales(value: unknown): value is CompiledLocales {
 }
 
 export const CompiledLocalesTypeDescription =
-  "CompiledLocales must be an object";
+  "CompiledLocales must be Record<string, Record<string, unknown>>";

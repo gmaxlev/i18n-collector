@@ -220,7 +220,7 @@ describe("compiler.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `"namespace" is not defined in locale [${file.filePath}] and no default namespace is provided"`
+        `"namespace" is not defined in locale [${file.filePath}] and no default namespace is provided`
       );
     });
 
@@ -250,7 +250,7 @@ describe("compiler.ts", () => {
       });
     });
 
-    test('Should merge the same namespaces from different files if "merge" is true', async () => {
+    test('Should merge the same namespace from different files if "merge" is true', async () => {
       const file1 = {
         filePath: "/src/en.locale.json",
         content: Buffer.from(
@@ -334,7 +334,7 @@ describe("compiler.ts", () => {
       });
     });
 
-    test('Should throw error if "merge" is false and the same namespaces are located in different files', async () => {
+    test('Should throw error if "merge" is false and the same namespace are located in different files', async () => {
       const file1 = {
         filePath: "/src/en.locale.json",
         content: Buffer.from(

@@ -60,7 +60,7 @@ function join(
     if (isUndefined(namespace)) {
       if (isUndefined(defaultNamespace)) {
         throw new Error(
-          `"namespace" is not defined in locale [${id}] and no default namespace is provided"`
+          `"namespace" is not defined in locale [${id}] and no default namespace is provided`
         );
       }
       namespace = defaultNamespace;
@@ -128,38 +128,61 @@ function wrapParseFunction(parser: ParserFunction) {
   };
 }
 
-export async function compile(params: CompilerOptions) {
+/**
+ * Compiles the locales
+ * @param options Compiler options
+ * @param options.files Array of locale files
+ * @param options.merge If true, the locales with the same namespace from different files will be merged. Default: false
+ * @param options.defaultNamespace Default namespace to use if it is not defined in the locale file
+ * @param options.parser Custom parser of locale files
+ *
+ * @example
+ * const files = await scan({
+ *     path: "./src",
+ *     matcher: /.+\.locale\.json/,
+ *     recursive: true
+ * })
+ * await compile({
+ *     files: await scan(files),
+ *     merge: true,
+ *     defaultNamespace: "common",
+ *     parser: myCustomParser
+ * })
+ *
+ * @returns Compiled locales ready to be saved
+ */
+export async function compile(options: CompilerOptions) {
   try {
-    if (!isRecord(params)) {
+    if (!isRecord(options)) {
       throw new TypeError("Options is not an object");
     }
 
-    if (!isUndefined(params.merge) && !isBoolean(params.merge)) {
+    if (!isUndefined(options.merge) && !isBoolean(options.merge)) {
       throw new TypeError("merge: must be a boolean or undefined");
     }
 
     if (
-      !isUndefined(params.defaultNamespace) &&
-      !isLocaleNamespace(params.defaultNamespace)
+      !isUndefined(options.defaultNamespace) &&
+      !isLocaleNamespace(options.defaultNamespace)
     ) {
       throw new TypeError(
         `defaultNamespace: ${LocaleNamespaceTypeDescription}`
       );
     }
 
-    if (!isLocaleFiles(params.files)) {
+    if (!isLocaleFiles(options.files)) {
       throw new TypeError(`files: ${LocaleFilesTypeDescription}`);
     }
 
-    if (!isUndefined(params.parser) && !isParserFunction(params.parser)) {
+    if (!isUndefined(options.parser) && !isParserFunction(options.parser)) {
       throw new TypeError(`parser: ${ParserFunctionTypeDescription}`);
     }
 
     // Wrap the parser function if it is provided or use the default parser
-    const parser = params.parser ? wrapParseFunction(params.parser) : parse;
+    const parser = options.parser ? wrapParseFunction(options.parser) : parse;
 
     const parsed = await Promise.all(
-      params.files.map((file) =>
+      options.files.map((file) =>
         parser({
           filePath: file.filePath,
           fileContent: file.content,
@@ -167,7 +190,7 @@ export async function compile(params: CompilerOptions) {
       )
     );
 
-    return join(parsed, params.defaultNamespace, params.merge);
+    return join(parsed, options.defaultNamespace, options.merge);
   } catch (error) {
     console.error("Error while compiling");
     throw error;
