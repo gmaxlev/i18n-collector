@@ -1,8 +1,8 @@
 import { vol } from "memfs";
-import { CompiledLocalesTypeDescription } from "../types";
-import { emit } from "../emitter";
+import { CompiledLocalesTypeDescription } from "../src/types";
+import { emit } from "../src/emitter";
 import { NOT_RECORD_TYPES, NOT_STRING_TYPES, excludeTypes } from "./utils";
-import type { EmitterOptions } from "../emitter";
+import type { EmitterOptions } from "../src/emitter";
 
 jest.mock("fs/promises");
 

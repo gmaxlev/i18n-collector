@@ -1,10 +1,10 @@
 import { excludeTypes, NOT_RECORD_TYPES, NOT_STRING_TYPES } from "./utils";
-import { run, RunnerOptions } from "../runner";
+import { run, RunnerOptions } from "../src/runner";
 import { vol } from "memfs";
 import {
   MatcherTypeDescription,
   ParserFunctionTypeDescription,
-} from "../types";
+} from "../src/types";
 
 jest.mock("fs/promises");
 

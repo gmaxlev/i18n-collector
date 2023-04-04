@@ -1,11 +1,11 @@
-import type { ParserOptions } from "./../types";
+import type { ParserOptions } from "./../src/types";
 import {
   NOT_RECORD_TYPES,
   NOT_STRING_TYPES,
   ALL_TYPES,
   excludeTypes,
 } from "./utils";
-import { parse } from "../parser";
+import { parse } from "../src/parser";
 
 describe("parser.ts", () => {
   let correctOptions: ParserOptions;

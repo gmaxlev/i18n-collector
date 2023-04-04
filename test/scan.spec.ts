@@ -1,12 +1,12 @@
 import { vol } from "memfs";
-import { scan, ScanOptions } from "../scan";
+import { scan, ScanOptions } from "../src/scan";
 import {
   excludeTypes,
   NOT_FUNCTION_TYPES,
   NOT_RECORD_TYPES,
   NOT_STRING_TYPES,
 } from "./utils";
-import { MatcherTypeDescription, LocaleFile } from "../types";
+import { MatcherTypeDescription, LocaleFile } from "../src/types";
 
 jest.mock("fs/promises");
 

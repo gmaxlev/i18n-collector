@@ -5,13 +5,13 @@ import {
   NOT_FUNCTION_TYPES,
   typesInArray,
 } from "./utils";
-import { compile, CompilerOptions } from "../compiler";
+import { compile, CompilerOptions } from "../src/compiler";
 import {
   LocaleFilesTypeDescription,
   LocaleNamespaceTypeDescription,
   ParseResultTypeDescription,
   ParserFunctionTypeDescription,
-} from "../types";
+} from "../src/types";
 
 describe("compiler.ts", () => {
   describe("compile()", () => {
