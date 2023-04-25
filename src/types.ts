@@ -45,7 +45,7 @@ export type MayAsync<T extends (...args: any[]) => unknown> =
 
 /** Matcher Type */
 
-export type Matcher = RegExp | MayAsync<(fileName: string) => boolean>;
+export type Matcher = RegExp | MayAsync<(filePath: string) => boolean>;
 
 export function isMatcher(value: unknown): value is Matcher {
   return value instanceof RegExp || typeof value === "function";
@@ -127,10 +127,9 @@ export const ParserFunctionTypeDescription =
 
 export type ParseResult = {
   id: unknown;
-  language: string;
-  translations?: object;
-  namespace: LocaleNamespace | undefined;
-} | null;
+  translations: Record<string, unknown>;
+  namespace: LocaleNamespace;
+};
 
 export function isParseResult(value: unknown): value is ParseResult {
   if (value === null) {
@@ -141,21 +140,17 @@ export function isParseResult(value: unknown): value is ParseResult {
     return false;
   }
 
-  const { language, translations, namespace, id } = value;
+  const { translations, namespace, id } = value;
 
   if (isUndefined(id)) {
     return false;
   }
 
-  if (!isString(language)) {
+  if (!isRecord(translations)) {
     return false;
   }
 
-  if (!isUndefined(translations) && !isRecord(translations)) {
-    return false;
-  }
-
-  if (!isUndefined(namespace) && !isLocaleNamespace(namespace)) {
+  if (!isLocaleNamespace(namespace)) {
     return false;
   }
 
@@ -163,7 +158,7 @@ export function isParseResult(value: unknown): value is ParseResult {
 }
 
 export const ParseResultTypeDescription =
-  "ParseResult should be { language: string, translations?: object, namespace?: string, id: unknown } or null";
+  "ParseResult should be { translations: object, namespace: string, id: unknown } or null";
 
 /** CompiledLocales Type */
 

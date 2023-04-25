@@ -12,7 +12,7 @@ description += `See docs at ${pkg.homepage}`;
 program.name(pkg.name).description(description).version(pkg.version);
 
 program
-  .command("run")
+  .command("compile")
   .description("Find and compile locales files into output path")
   .argument("<output>", "output path")
   .option("-w, --watch [value]", "watch mode", parseBooleanInput, false)
@@ -29,9 +29,7 @@ program
     parseBooleanInput,
     false
   )
-  .option("-n, --defaultNamespace <value>", "default namespace")
   .option("-i, --input <value>", "input path")
-  .option("-g, --matcher <value>", "RegExp to match locales files")
   .action(async (output, options) => {
     // ⛔️ IMPORTANT
     // output and options have "any" type
@@ -43,14 +41,6 @@ program
       clear: options.clear,
       merge: options.merge,
     };
-
-    if (isString(options.defaultNamespace)) {
-      runnerOptions.defaultNamespace = options.defaultNamespace;
-    }
-
-    if (isString(options.regexp)) {
-      runnerOptions.matcher = new RegExp(options.regexp);
-    }
 
     if (isString(options.input)) {
       runnerOptions.inputPath = options.input;

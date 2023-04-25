@@ -26,7 +26,6 @@ export interface RunnerOptions {
   recursive?: boolean;
   clear?: boolean;
   parser?: ParserFunction;
-  defaultNamespace?: string;
 }
 
 export interface ValidRunnerOptions {
@@ -37,7 +36,6 @@ export interface ValidRunnerOptions {
   recursive: boolean;
   clear: boolean;
   parser: ParserFunction;
-  defaultNamespace?: string;
 }
 
 export function validateRunnerOptions(
@@ -71,13 +69,6 @@ export function validateRunnerOptions(
     throw new TypeError(`parser: ${ParserFunctionTypeDescription}`);
   }
 
-  if (
-    !isUndefined(options.defaultNamespace) &&
-    !isString(options.defaultNamespace)
-  ) {
-    throw new TypeError("defaultNamespace: should be a string");
-  }
-
   const inputPath = options.inputPath || process.cwd();
   const merge = isBoolean(options.merge) ? options.merge : false;
   const clear = isBoolean(options.clear) ? options.clear : false;
@@ -95,10 +86,6 @@ export function validateRunnerOptions(
     parser,
   };
 
-  if (isString(options.defaultNamespace)) {
-    validOptions.defaultNamespace = options.defaultNamespace;
-  }
-
   return validOptions;
 }
 
@@ -114,7 +101,6 @@ export function validateRunnerOptions(
  * @param options.recursive If true, the scan will be recursive. Default: true
  * @param options.clear If true, the output directory will be cleared before writing the compiled files. Default: false
  * @param options.parser The parser to use to parse the locale files
- * @param options.defaultNamespace The default namespace to use if not specified in the file
  *
  * @example
  * await run({
@@ -125,7 +111,6 @@ export function validateRunnerOptions(
  *     recursive: true,
  *     clear: true,
  *     parser: customParserFunction,
- *     defaultNamespace: 'common'
  * })
  *
  * @returns The stats of the emitted files
@@ -169,13 +154,6 @@ export async function run(options: RunnerOptions) {
     parser: validOptions.parser,
     files,
   };
-
-  if (options.defaultNamespace) {
-    compilerOptions = {
-      ...compilerOptions,
-      defaultNamespace: options.defaultNamespace,
-    };
-  }
 
   const compiledLocales = await compile(compilerOptions);
 

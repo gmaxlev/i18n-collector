@@ -99,21 +99,6 @@ describe("Runner", () => {
       }
     });
 
-    test('Should throw an error if "defaultNamespace" is not a string and undefined', async () => {
-      for (const value of excludeTypes(["string", "undefined"])) {
-        const params: RunnerOptions = {
-          ...validRunnerOptions,
-          defaultNamespace: value,
-        };
-
-        const act = () => run(params);
-
-        const result = await expect(act);
-
-        await result.rejects.toThrow("defaultNamespace: should be a string");
-      }
-    });
-
     test('Should throw an error if "parser" has an invalid type', async () => {
       for (const value of excludeTypes(["function", "undefined"])) {
         const params: RunnerOptions = {
@@ -215,49 +200,11 @@ describe("Runner", () => {
     });
 
     test("Should scan, compile and write locales files", async () => {
-      const localeFile1 = {
-        namespace: "module_1",
-        translations: {
-          key_1: "value_1",
-          key_2: "value_2",
-        },
-      };
-
-      const localeFile2 = {
-        namespace: "module_1",
-        translations: {
-          key_1: "value_3",
-          key_2: "value_4",
-        },
-      };
-
-      const localeFile3 = {
-        namespace: "module_1",
-        translations: {
-          key_3: "value_5",
-          key_4: "value_6",
-        },
-      };
-
-      const localeFile4 = {
-        namespace: "module_2",
-        translations: {
-          key_3: "value_7",
-        },
-      };
-
-      const localeFile5 = {
-        translations: {
-          key_4: "value_8",
-        },
-      };
-
       vol.fromNestedJSON(
         {
           dont_compile_these_files: {
-            "uk.locale.json": JSON.stringify({
-              namespace: "other_domain",
-              translations: {
+            "other.locale.json": JSON.stringify({
+              en: {
                 key: "value",
               },
             }),
@@ -267,19 +214,40 @@ describe("Runner", () => {
           },
           src: {
             module1: {
-              "en.locale.json": JSON.stringify(localeFile1),
-              "uk.locale.json": JSON.stringify(localeFile2),
+              "model_1.locale.json": JSON.stringify({
+                uk: {
+                  key1: "value1",
+                },
+                en: {
+                  key2: "value2",
+                },
+              }),
             },
             some_directory: {
-              "en.locale.json": JSON.stringify(localeFile3),
+              "some-component.locale.json": JSON.stringify({
+                uk: {
+                  key3: "value3",
+                },
+                en: {
+                  key4: "value4",
+                },
+              }),
             },
 
             module2: {
-              "uk.locale.json": JSON.stringify(localeFile4),
+              "some-module.locale.json": JSON.stringify({
+                en: {
+                  key5: "value5",
+                },
+              }),
             },
 
             module3: {
-              "uk.locale.json": JSON.stringify(localeFile5),
+              "some-module-2.locale.json": JSON.stringify({
+                gr: {
+                  key6: "value7",
+                },
+              }),
             },
 
             module4: {
@@ -295,13 +263,12 @@ describe("Runner", () => {
             some_other_file_but_should_be_delete: "some_other_content",
           },
         },
-        "/src"
+        "/home"
       );
 
       const options: RunnerOptions = {
-        inputPath: "/src/src",
-        outputPath: "/src/dist",
-        defaultNamespace: "some_default_namespace",
+        inputPath: "/home/src",
+        outputPath: "/home/dist",
         merge: true,
         clear: true,
       };
@@ -309,24 +276,22 @@ describe("Runner", () => {
       await run(options);
 
       expect(vol.toJSON()).toEqual({
-        "/src/dont_compile_these_files/uk.locale.json":
-          '{"namespace":"other_domain","translations":{"key":"value"}}',
-        "/src/some_other_directory/image.png": "image_content",
-        "/src/src/module1/en.locale.json":
-          '{"namespace":"module_1","translations":{"key_1":"value_1","key_2":"value_2"}}',
-        "/src/src/module1/uk.locale.json":
-          '{"namespace":"module_1","translations":{"key_1":"value_3","key_2":"value_4"}}',
-        "/src/src/some_directory/en.locale.json":
-          '{"namespace":"module_1","translations":{"key_3":"value_5","key_4":"value_6"}}',
-        "/src/src/module2/uk.locale.json":
-          '{"namespace":"module_2","translations":{"key_3":"value_7"}}',
-        "/src/src/module3/uk.locale.json":
-          '{"translations":{"key_4":"value_8"}}',
-        "/src/src/module4/uk.locale.json": "",
-        "/src/dist/en.json":
-          '{"module_1":{"key_1":"value_1","key_2":"value_2","key_3":"value_5","key_4":"value_6"}}',
-        "/src/dist/uk.json":
-          '{"module_1":{"key_1":"value_3","key_2":"value_4"},"module_2":{"key_3":"value_7"},"some_default_namespace":{"key_4":"value_8"}}',
+        "/home/dont_compile_these_files/other.locale.json":
+          '{"en":{"key":"value"}}',
+        "/home/some_other_directory/image.png": "image_content",
+        "/home/src/module1/model_1.locale.json":
+          '{"uk":{"key1":"value1"},"en":{"key2":"value2"}}',
+        "/home/src/some_directory/some-component.locale.json":
+          '{"uk":{"key3":"value3"},"en":{"key4":"value4"}}',
+        "/home/src/module2/some-module.locale.json": '{"en":{"key5":"value5"}}',
+        "/home/src/module3/some-module-2.locale.json":
+          '{"gr":{"key6":"value7"}}',
+        "/home/src/module4/uk.locale.json": "",
+        "/home/dist/uk.json":
+          '{"model_1":{"key1":"value1"},"some-component":{"key3":"value3"}}',
+        "/home/dist/en.json":
+          '{"model_1":{"key2":"value2"},"some-module":{"key5":"value5"},"some-component":{"key4":"value4"}}',
+        "/home/dist/gr.json": '{"some-module-2":{"key6":"value7"}}',
       });
     });
   });

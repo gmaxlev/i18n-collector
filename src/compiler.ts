@@ -8,11 +8,9 @@ import { parse } from "./parser";
 import type { CompiledLocales, ParseResult } from "./types";
 import {
   isLocaleFiles,
-  isLocaleNamespace,
   isParseResult,
   isParserFunction,
   LocaleFilesTypeDescription,
-  LocaleNamespaceTypeDescription,
   ParseResultTypeDescription,
   ParserFunctionTypeDescription,
 } from "./types";
@@ -21,7 +19,6 @@ import { isBoolean, isRecord, isPromise, isUndefined } from "./types";
 export interface CompilerOptions {
   files: LocaleFiles;
   merge?: boolean;
-  defaultNamespace?: LocaleNamespace;
   parser?: ParserFunction;
 }
 
@@ -34,18 +31,14 @@ function findIdInLocales(
     if (locale === null) {
       continue;
     }
-    if (locale.language === language && locale.namespace === namespace) {
+    if (language in locale.translations && locale.namespace === namespace) {
       return locale.id;
     }
   }
   return null;
 }
 
-function join(
-  locales: ParseResult[],
-  defaultNamespace?: LocaleNamespace,
-  merge = true
-): CompiledLocales {
+function join(locales: ParseResult[], merge = true): CompiledLocales {
   let languages: CompiledLocales = {};
 
   for (const locale of locales) {
@@ -53,50 +46,49 @@ function join(
       continue;
     }
 
-    const { id, language } = locale;
+    const { id, translations, namespace } = locale;
 
-    let { namespace } = locale;
+    for (const language in translations) {
+      let languageRecord = (languages[language] = languages[language] || {});
 
-    if (isUndefined(namespace)) {
-      if (isUndefined(defaultNamespace)) {
+      if (!isUndefined(languageRecord[namespace]) && !merge) {
+        const conflictedLocaleId = findIdInLocales(
+          locales.filter((item) => item !== locale),
+          language,
+          namespace
+        );
+
         throw new Error(
-          `"namespace" is not defined in locale [${id}] and no default namespace is provided`
+          `Locales [${id}] and [${conflictedLocaleId}] have the same namespace. If you want to allow merging, set the "merge" option to true`
         );
       }
-      namespace = defaultNamespace;
+
+      let namespaceRecord = (languageRecord[namespace] =
+        languageRecord[namespace] || {});
+
+      const namespaceTranslations = translations[language];
+
+      if (!isRecord(namespaceTranslations)) {
+        throw new Error(
+          `Translations for language [${language}] and namespace [${namespace}] must be an object`
+        );
+      }
+
+      namespaceRecord = {
+        ...namespaceRecord,
+        ...namespaceTranslations,
+      };
+
+      languageRecord = {
+        ...languageRecord,
+        [namespace]: namespaceRecord,
+      };
+
+      languages = {
+        ...languages,
+        [language]: languageRecord,
+      };
     }
-
-    let languageRecord = (languages[language] = languages[language] || {});
-
-    if (!isUndefined(languageRecord[namespace]) && !merge) {
-      const conflictedLocaleId = findIdInLocales(
-        locales.filter((item) => item !== locale),
-        language,
-        namespace
-      );
-
-      throw new Error(
-        `Locales [${id}] and [${conflictedLocaleId}] have the same namespace. If you want to allow merging, set the "merge" option to true`
-      );
-    }
-
-    let namespaceRecord = (languageRecord[namespace] =
-      languageRecord[namespace] || {});
-
-    namespaceRecord = {
-      ...namespaceRecord,
-      ...locale.translations,
-    };
-
-    languageRecord = {
-      ...languageRecord,
-      [namespace]: namespaceRecord,
-    };
-
-    languages = {
-      ...languages,
-      [language]: languageRecord,
-    };
   }
 
   return languages;
@@ -129,11 +121,10 @@ function wrapParseFunction(parser: ParserFunction) {
 }
 
 /**
- * Compiles the locales
+ * Compiles locales
  * @param options Compiler options
  * @param options.files Array of locale files
  * @param options.merge If true, the locales with the same namespace from different files will be merged. Default: false
- * @param options.defaultNamespace Default namespace to use if it is not defined in the locale file
  * @param options.parser Custom parser of locale files
  *
  * @example
@@ -145,7 +136,6 @@ function wrapParseFunction(parser: ParserFunction) {
  * await compile({
  *     files: await scan(files),
  *     merge: true,
- *     defaultNamespace: "common",
  *     parser: myCustomParser
  * })
  *
@@ -159,15 +149,6 @@ export async function compile(options: CompilerOptions) {
 
     if (!isUndefined(options.merge) && !isBoolean(options.merge)) {
       throw new TypeError("merge: must be a boolean or undefined");
-    }
-
-    if (
-      !isUndefined(options.defaultNamespace) &&
-      !isLocaleNamespace(options.defaultNamespace)
-    ) {
-      throw new TypeError(
-        `defaultNamespace: ${LocaleNamespaceTypeDescription}`
-      );
     }
 
     if (!isLocaleFiles(options.files)) {
@@ -190,7 +171,7 @@ export async function compile(options: CompilerOptions) {
       )
     );
 
-    return join(parsed, options.defaultNamespace, options.merge);
+    return join(parsed, options.merge);
   } catch (error) {
     console.error("Error while compiling");
     throw error;

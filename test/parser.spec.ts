@@ -12,7 +12,7 @@ describe("parser.ts", () => {
 
   beforeEach(() => {
     correctOptions = {
-      filePath: "en.locale.json",
+      filePath: "namespace.locale.json",
       fileContent: Buffer.from(
         JSON.stringify({
           namespace: "module",
@@ -67,26 +67,36 @@ describe("parser.ts", () => {
   test("Should return null if buffer is empty", () => {
     const options: ParserOptions = {
       ...correctOptions,
+      filePath: "__namespace__.locale.json",
       fileContent: Buffer.alloc(0),
     };
 
     const result = parse(options);
 
-    expect(result).toBeNull();
+    expect(result).toEqual({
+      id: "__namespace__.locale.json",
+      namespace: "__namespace__",
+      translations: {},
+    });
   });
 
-  test("Should return null if buffer contains an empty string", () => {
+  test("Should return an empty object if buffer contains an empty string", () => {
     const options: ParserOptions = {
       ...correctOptions,
+      filePath: "__namespace__.locale.json",
       fileContent: Buffer.from("    "),
     };
 
     const result = parse(options);
 
-    expect(result).toBeNull();
+    expect(result).toEqual({
+      id: "__namespace__.locale.json",
+      namespace: "__namespace__",
+      translations: {},
+    });
   });
 
-  test("Should throw an error if file content is not a valid JSON", () => {
+  test("Should throw an error if file content is not valid JSON", () => {
     const options: ParserOptions = {
       ...correctOptions,
       fileContent: Buffer.from("!_not_valid_json_!"),
@@ -125,7 +135,7 @@ describe("parser.ts", () => {
       "a json",
       "locale.json",
       ".locale.json",
-      "uk.locale.xml",
+      "namespace.locale.xml",
     ];
 
     for (const fileName of invalidFileNames) {
@@ -139,77 +149,18 @@ describe("parser.ts", () => {
       const result = expect(act);
 
       result.toThrow(
-        `Filename should contain language code in format "[lang].locale.json"`
+        `Filename should contain language code in format "[namespace].locale.json"`
       );
     }
-  });
-
-  test("Should return language from filename", () => {
-    const validFilePaths = {
-      "en.locale.json": "en",
-      "en-US.locale.json": "en-US",
-      "en-us.locale.json": "en-us",
-      "uk.locale.json": "uk",
-      "a.b.c.d.locale.json": "a.b.c.d",
-    };
-
-    const keys = Object.keys(validFilePaths) as Array<
-      keyof typeof validFilePaths
-    >;
-
-    for (const filePath of keys) {
-      const options: ParserOptions = {
-        ...correctOptions,
-        filePath,
-        fileContent: Buffer.from(
-          JSON.stringify({
-            translations: {
-              key: "value",
-            },
-          })
-        ),
-      };
-
-      const result = parse(options);
-
-      expect(result).toEqual({
-        language: (validFilePaths as any)[filePath],
-        namespace: undefined,
-        translations: { key: "value" },
-        id: filePath,
-      });
-    }
-  });
-
-  test("Should return 'undefined' namespace if it is not specified in file", () => {
-    const options: ParserOptions = {
-      ...correctOptions,
-      fileContent: Buffer.from(
-        JSON.stringify({
-          translations: {
-            key: "value",
-          },
-        })
-      ),
-    };
-
-    const result = parse(options);
-
-    expect(result).toEqual({
-      language: "en",
-      namespace: undefined,
-      translations: { key: "value" },
-      id: "en.locale.json",
-    });
   });
 
   test("Should return provided namespace", () => {
     const options: ParserOptions = {
       ...correctOptions,
+      filePath: "_my_namespace_.locale.json",
       fileContent: Buffer.from(
         JSON.stringify({
-          namespace: "_provided_namespace_",
-          translations: {
+          en: {
             key: "value",
           },
         })
@@ -219,66 +170,53 @@ describe("parser.ts", () => {
     const result = parse(options);
 
     expect(result).toEqual({
-      language: "en",
-      namespace: "_provided_namespace_",
-      translations: { key: "value" },
-      id: "en.locale.json",
+      namespace: "_my_namespace_",
+      translations: {
+        en: {
+          key: "value",
+        },
+      },
+      id: "_my_namespace_.locale.json",
     });
   });
 
   test("Should return an empty translations if translations are not specified", () => {
     const options: ParserOptions = {
       ...correctOptions,
-      filePath: "/src/en.locale.json",
-      fileContent: Buffer.from(
-        JSON.stringify({
-          namespace: "_provided_namespace_",
-        })
-      ),
+      filePath: "/src/_my_namespace_.locale.json",
+      fileContent: Buffer.from(""),
     };
 
     const result = parse(options);
 
     expect(result).toEqual({
-      language: "en",
-      namespace: "_provided_namespace_",
+      namespace: "_my_namespace_",
       translations: {},
-      id: "/src/en.locale.json",
+      id: "/src/_my_namespace_.locale.json",
     });
-  });
-
-  test("Should throw an error if translations are not an object", () => {
-    const invalidContent = [1, null, []];
-
-    for (const content of invalidContent) {
-      const options: ParserOptions = {
-        ...correctOptions,
-        fileContent: Buffer.from(
-          JSON.stringify({
-            translations: content,
-          })
-        ),
-      };
-
-      const act = () => parse(options);
-
-      expect(act).toThrow(`"translations" must be an object`);
-    }
   });
 
   test("Should return correct result", () => {
     const options: ParserOptions = {
       ...correctOptions,
-      filePath: "/src/module/en-US.locale.json",
+      filePath: "/src/module/_super_namespace_.locale.json",
       fileContent: Buffer.from(
         JSON.stringify({
-          namespace: "_provided_namespace_",
-          translations: {
+          uk: {
             key: "value",
             nestedObject: {
               _key_: "_value_",
               nestedObject2: {
                 __key__: "__value__",
+              },
+            },
+          },
+          en: {
+            key: "value_2",
+            nestedObject: {
+              _key_: "_value__2",
+              nestedObject2: {
+                __key__: "__value___2",
               },
             },
           },
@@ -289,18 +227,28 @@ describe("parser.ts", () => {
     const result = parse(options);
 
     expect(result).toEqual({
-      language: "en-US",
-      namespace: "_provided_namespace_",
+      namespace: "_super_namespace_",
       translations: {
-        key: "value",
-        nestedObject: {
-          _key_: "_value_",
-          nestedObject2: {
-            __key__: "__value__",
+        uk: {
+          key: "value",
+          nestedObject: {
+            _key_: "_value_",
+            nestedObject2: {
+              __key__: "__value__",
+            },
+          },
+        },
+        en: {
+          key: "value_2",
+          nestedObject: {
+            _key_: "_value__2",
+            nestedObject2: {
+              __key__: "__value___2",
+            },
           },
         },
       },
-      id: "/src/module/en-US.locale.json",
+      id: "/src/module/_super_namespace_.locale.json",
     });
   });
 });

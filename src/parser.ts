@@ -2,20 +2,7 @@ import type { ParseResult, ParserOptions } from "./types";
 import path from "path";
 import { isBuffer, isRecord, isString } from "./types";
 
-function getNamespace(content: object) {
-  let namespace: string | undefined = undefined;
-
-  if ("namespace" in content) {
-    if (!isString(content.namespace)) {
-      throw new TypeError("Namespace must be a string");
-    }
-    namespace = content.namespace;
-  }
-
-  return namespace;
-}
-
-function getLanguage(filePath: string) {
+function getNamespace(filePath: string) {
   const basename = path.basename(filePath);
 
   const result = [...basename.matchAll(/(.+)\.locale\.json/g)];
@@ -27,23 +14,18 @@ function getLanguage(filePath: string) {
     result[0][1].trim() === ""
   ) {
     throw new Error(
-      `Filename  ${filePath} has an invalid name. Filename should contain language code in format "[lang].locale.json"`
+      `Filename  ${filePath} has an invalid name. Filename should contain language code in format "[namespace].locale.json"`
     );
   }
 
   return result[0][1];
 }
 
-function getTranslations(content: object) {
-  if (!("translations" in content)) {
+function getTranslations(content: Record<string, unknown> | null) {
+  if (content === null) {
     return {};
   }
-
-  if (!isRecord(content.translations)) {
-    throw new Error(`"translations" must be an object`);
-  }
-
-  return content.translations as object;
+  return content;
 }
 
 function parseJSON(content: Buffer) {
@@ -89,17 +71,11 @@ export function parse(options: ParserOptions): ParseResult {
 
     const parsed = parseJSON(options.fileContent);
 
-    if (parsed === null) {
-      return null;
-    }
-
-    const language = getLanguage(options.filePath);
-    const namespace = getNamespace(parsed);
+    const namespace = getNamespace(options.filePath);
     const translations = getTranslations(parsed);
     const id = options.filePath;
 
     return {
-      language,
       namespace,
       translations,
       id,

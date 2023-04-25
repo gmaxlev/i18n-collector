@@ -15,7 +15,6 @@ import { isEnoentError } from "./types";
  * @param options.recursive If true, the scan will be recursive. Default: true
  * @param options.clear If true, the output directory will be cleared before writing the compiled files. Default: false
  * @param options.parser The parser to use to parse the locale files
- * @param options.defaultNamespace The default namespace to use if not specified in the file
  */
 export async function watch(options: RunnerOptions) {
   const validOptions = validateRunnerOptions(options);

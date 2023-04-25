@@ -197,7 +197,7 @@ async function getSnapshot(path: string, matcher: Matcher): Promise<Snapshot> {
 }
 
 /**
- * Emit compiled locales to files
+ * Writes compiled locales to the file system
  * @param options Options
  * @param options.compiledLocales Compiled locales
  * @param options.outputPath Output path

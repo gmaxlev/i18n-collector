@@ -76,7 +76,7 @@ function validateOptions(options: ScanOptions) {
 }
 
 /**
- * Scans the directory for specified files
+ * Scans the directory for localization files
  * @param options Options
  * @param options.path The path to the directory to scan
  * @param options.matcher The matcher to use to filter files
