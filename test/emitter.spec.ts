@@ -1,8 +1,7 @@
 import { vol } from "memfs";
-import { CompiledLocalesTypeDescription } from "../types";
-import { emit } from "../emitter";
+import { emit } from "../src/emitter";
 import { NOT_RECORD_TYPES, NOT_STRING_TYPES, excludeTypes } from "./utils";
-import type { EmitterOptions } from "../emitter";
+import type { EmitterOptions } from "../src/emitter";
 
 jest.mock("fs/promises");
 
@@ -33,7 +32,7 @@ describe("emitter.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("options should be an object");
+        await result.rejects.toThrow("options: must be a record");
       }
     });
 
@@ -46,7 +45,7 @@ describe("emitter.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `compiledLocales: ${CompiledLocalesTypeDescription}`
+        `compiledLocales: must be Record<string, Record<string, unknown>>`
       );
     });
 
@@ -58,7 +57,7 @@ describe("emitter.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("outputPath: should be a string");
+        await result.rejects.toThrow("outputPath: must be a string");
       }
     });
 
@@ -70,7 +69,7 @@ describe("emitter.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("clear: should be a boolean");
+        await result.rejects.toThrow("clear: must be boolean");
       }
     });
 

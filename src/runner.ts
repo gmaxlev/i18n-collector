@@ -4,16 +4,8 @@ import { defaultMatcher } from "./constants";
 import { emit } from "./emitter";
 import { isAvailableDirectory } from "./utils";
 import type { Matcher, ParserFunction } from "./types";
-import {
-  isMatcher,
-  MatcherTypeDescription,
-  isBoolean,
-  isRecord,
-  isString,
-  isUndefined,
-  isParserFunction,
-  ParserFunctionTypeDescription,
-} from "./types";
+import { isMatcher, isParserFunction } from "./types";
+import { isBoolean, isRecord, isString, isUndefined } from "tsguarder";
 import { parse } from "./parser";
 import { performance } from "perf_hooks";
 import chalk from "chalk";
@@ -26,7 +18,6 @@ export interface RunnerOptions {
   recursive?: boolean;
   clear?: boolean;
   parser?: ParserFunction;
-  defaultNamespace?: string;
 }
 
 export interface ValidRunnerOptions {
@@ -37,45 +28,33 @@ export interface ValidRunnerOptions {
   recursive: boolean;
   clear: boolean;
   parser: ParserFunction;
-  defaultNamespace?: string;
 }
 
 export function validateRunnerOptions(
   options: RunnerOptions
 ): ValidRunnerOptions {
-  if (!isRecord(options)) {
-    throw new TypeError("params should be an object");
+  isRecord.assert(options, "options");
+
+  isString.assert(options.outputPath, "outputPath");
+
+  if (!isUndefined(options.merge)) {
+    isBoolean.assert(options.merge, "merge");
   }
 
-  if (!isString(options.outputPath)) {
-    throw new TypeError("outputPath: should be a string");
+  if (!isUndefined(options.matcher)) {
+    isMatcher.assert(options.matcher, "matcher");
   }
 
-  if (!isUndefined(options.merge) && !isBoolean(options.merge)) {
-    throw new TypeError("merge: should be a boolean");
+  if (!isUndefined(options.recursive)) {
+    isBoolean.assert(options.recursive, "recursive");
   }
 
-  if (!isUndefined(options.matcher) && !isMatcher(options.matcher)) {
-    throw new TypeError(`matcher: ${MatcherTypeDescription}`);
+  if (!isUndefined(options.inputPath)) {
+    isString.assert(options.inputPath, "inputPath");
   }
 
-  if (!isUndefined(options.recursive) && !isBoolean(options.recursive)) {
-    throw new TypeError("recursive: should be a boolean");
-  }
-
-  if (!isUndefined(options.inputPath) && !isString(options.inputPath)) {
-    throw new TypeError("inputPath: should be a string");
-  }
-
-  if (!isUndefined(options.parser) && !isParserFunction(options.parser)) {
-    throw new TypeError(`parser: ${ParserFunctionTypeDescription}`);
-  }
-
-  if (
-    !isUndefined(options.defaultNamespace) &&
-    !isString(options.defaultNamespace)
-  ) {
-    throw new TypeError("defaultNamespace: should be a string");
+  if (!isUndefined(options.parser)) {
+    isParserFunction.assert(options.parser, "parser");
   }
 
   const inputPath = options.inputPath || process.cwd();
@@ -95,10 +74,6 @@ export function validateRunnerOptions(
     parser,
   };
 
-  if (isString(options.defaultNamespace)) {
-    validOptions.defaultNamespace = options.defaultNamespace;
-  }
-
   return validOptions;
 }
 
@@ -114,7 +89,6 @@ export function validateRunnerOptions(
  * @param options.recursive If true, the scan will be recursive. Default: true
  * @param options.clear If true, the output directory will be cleared before writing the compiled files. Default: false
  * @param options.parser The parser to use to parse the locale files
- * @param options.defaultNamespace The default namespace to use if not specified in the file
  *
  * @example
  * await run({
@@ -125,7 +99,6 @@ export function validateRunnerOptions(
  *     recursive: true,
  *     clear: true,
  *     parser: customParserFunction,
- *     defaultNamespace: 'common'
  * })
  *
  * @returns The stats of the emitted files
@@ -169,13 +142,6 @@ export async function run(options: RunnerOptions) {
     parser: validOptions.parser,
     files,
   };
-
-  if (options.defaultNamespace) {
-    compilerOptions = {
-      ...compilerOptions,
-      defaultNamespace: options.defaultNamespace,
-    };
-  }
 
   const compiledLocales = await compile(compilerOptions);
 

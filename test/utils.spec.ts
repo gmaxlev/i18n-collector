@@ -4,7 +4,7 @@ import {
   isAvailableDirectory,
   isExistingPath,
   useMatcher,
-} from "../utils";
+} from "../src/utils";
 
 jest.mock("fs/promises");
 
