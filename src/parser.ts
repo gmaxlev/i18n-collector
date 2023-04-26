@@ -1,6 +1,7 @@
 import type { ParseResult, ParserOptions } from "./types";
 import path from "path";
-import { isBuffer, isRecord, isString } from "./types";
+import { isBuffer } from "./types";
+import { isRecord, isString } from "tsguarder";
 
 function getNamespace(filePath: string) {
   const basename = path.basename(filePath);
@@ -48,26 +49,18 @@ function parseJSON(content: Buffer) {
     throw e;
   }
 
-  if (!isRecord(parsed)) {
-    throw new Error("By default locale file must be a valid JSON object");
-  }
+  isRecord.assert(parsed, "locale file");
 
   return parsed;
 }
 
 export function parse(options: ParserOptions): ParseResult {
   try {
-    if (!isRecord(options)) {
-      throw new Error("Options should be an object");
-    }
+    isRecord.assert(options, "options");
 
-    if (!isString(options.filePath)) {
-      throw new Error("filePath: should be a string");
-    }
+    isString.assert(options.filePath, "filePath");
 
-    if (!isBuffer(options.fileContent)) {
-      throw new Error("fileContent: should be a Buffer");
-    }
+    isBuffer.assert(options.fileContent, "fileContent");
 
     const parsed = parseJSON(options.fileContent);
 

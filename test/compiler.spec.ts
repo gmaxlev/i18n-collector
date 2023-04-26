@@ -2,16 +2,9 @@ import {
   excludeTypes,
   NOT_ARRAY_TYPES,
   NOT_RECORD_TYPES,
-  NOT_FUNCTION_TYPES,
   typesInArray,
 } from "./utils";
 import { compile, CompilerOptions } from "../src/compiler";
-import {
-  LocaleFilesTypeDescription,
-  LocaleNamespaceTypeDescription,
-  ParseResultTypeDescription,
-  ParserFunctionTypeDescription,
-} from "../src/types";
 
 describe("compiler.ts", () => {
   describe("compile()", () => {
@@ -33,7 +26,7 @@ describe("compiler.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("Options is not an object");
+        await result.rejects.toThrow("options: must be a record");
       }
     });
 
@@ -45,7 +38,7 @@ describe("compiler.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("merge: must be a boolean or undefined");
+        await result.rejects.toThrow("merge: must be boolean");
       }
     });
 
@@ -62,7 +55,9 @@ describe("compiler.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow(`files: ${LocaleFilesTypeDescription}`);
+        await result.rejects.toThrow(
+          `files: must be Array<{ filePath: string, content: Buffer, bytes: number }>`
+        );
       }
     });
 
@@ -74,9 +69,7 @@ describe("compiler.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow(
-          `parser: ${ParserFunctionTypeDescription}`
-        );
+        await result.rejects.toThrow(`parser: must be a function`);
       }
     });
 
@@ -94,7 +87,7 @@ describe("compiler.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `Parser has returned an invalid type: ${ParseResultTypeDescription}`
+        `return value of a custom parser: must be { translations: object, namespace: string, id: unknown }`
       );
     });
 
@@ -112,7 +105,7 @@ describe("compiler.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `Parser has returned an invalid type: ${ParseResultTypeDescription}`
+        `return value of a custom parser: must be { translations: object, namespace: string, id: unknown }`
       );
     });
 

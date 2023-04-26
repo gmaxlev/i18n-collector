@@ -1,10 +1,6 @@
 import { excludeTypes, NOT_RECORD_TYPES, NOT_STRING_TYPES } from "./utils";
 import { run, RunnerOptions } from "../src/runner";
 import { vol } from "memfs";
-import {
-  MatcherTypeDescription,
-  ParserFunctionTypeDescription,
-} from "../src/types";
 
 jest.mock("fs/promises");
 
@@ -26,7 +22,7 @@ describe("Runner", () => {
       for (const value of NOT_RECORD_TYPES) {
         const act = () => run(value);
 
-        await expect(act).rejects.toThrow("params should be an object");
+        await expect(act).rejects.toThrow("options: must be a record");
       }
     });
 
@@ -41,7 +37,7 @@ describe("Runner", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("outputPath: should be a string");
+        await result.rejects.toThrow("outputPath: must be a string");
       }
     });
 
@@ -53,7 +49,7 @@ describe("Runner", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("merge: should be a boolean");
+        await result.rejects.toThrow("merge: must be boolean");
       }
     });
 
@@ -68,7 +64,7 @@ describe("Runner", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("recursive: should be a boolean");
+        await result.rejects.toThrow("recursive: must be boolean");
       }
     });
 
@@ -80,7 +76,9 @@ describe("Runner", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow(`matcher: ${MatcherTypeDescription}`);
+        await result.rejects.toThrow(
+          `matcher: must be a RegExp or (fileName: string) => boolean`
+        );
       }
     });
 
@@ -95,7 +93,7 @@ describe("Runner", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("inputPath: should be a string");
+        await result.rejects.toThrow("inputPath: must be a string");
       }
     });
 
@@ -110,9 +108,7 @@ describe("Runner", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow(
-          `parser: ${ParserFunctionTypeDescription}`
-        );
+        await result.rejects.toThrow(`parser: must be a function`);
       }
     });
 

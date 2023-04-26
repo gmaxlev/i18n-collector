@@ -6,7 +6,7 @@ import {
   NOT_RECORD_TYPES,
   NOT_STRING_TYPES,
 } from "./utils";
-import { MatcherTypeDescription, LocaleFile } from "../src/types";
+import { LocaleFile } from "../src/types";
 
 jest.mock("fs/promises");
 
@@ -28,7 +28,7 @@ describe("scan.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("Options is not an object");
+        await result.rejects.toThrow("options: must be a record");
       }
     });
 
@@ -40,7 +40,7 @@ describe("scan.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("path is not a string");
+        await result.rejects.toThrow("path: must be a string");
       }
     });
 
@@ -52,7 +52,9 @@ describe("scan.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow(`matcher: ${MatcherTypeDescription}`);
+        await result.rejects.toThrow(
+          `matcher: must be a RegExp or (fileName: string) => boolean`
+        );
       }
     });
 
@@ -63,7 +65,9 @@ describe("scan.ts", () => {
 
       const result = await expect(act);
 
-      await result.rejects.not.toThrow(`matcher: ${MatcherTypeDescription}`);
+      await result.rejects.not.toThrow(
+        `matcher: must be a RegExp or (fileName: string) => boolean`
+      );
     });
 
     test('Should throw an error if "recursive" is not a boolean and undefined', async () => {
@@ -74,7 +78,7 @@ describe("scan.ts", () => {
 
         const result = await expect(act);
 
-        await result.rejects.toThrow("recursive is not a boolean");
+        await result.rejects.toThrow("recursive: must be boolean");
       }
     });
 

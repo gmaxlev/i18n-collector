@@ -2,14 +2,8 @@ import type { LocaleFile, Matcher } from "./types";
 import fsp from "fs/promises";
 import path from "path";
 import { isAvailableDirectory, useMatcher } from "./utils";
-import {
-  isMatcher,
-  MatcherTypeDescription,
-  isBoolean,
-  isRecord,
-  isString,
-  isUndefined,
-} from "./types";
+import { isMatcher } from "./types";
+import { isBoolean, isRecord, isString, isUndefined } from "tsguarder";
 
 export interface ScanOptions {
   path: string;
@@ -58,20 +52,14 @@ async function scanDirectory(
 }
 
 function validateOptions(options: ScanOptions) {
-  if (!isRecord(options)) {
-    throw new TypeError("Options is not an object");
-  }
+  isRecord.assert(options, "options");
 
-  if (!isString(options.path)) {
-    throw new TypeError("path is not a string");
-  }
+  isString.assert(options.path, "path");
 
-  if (!isMatcher(options.matcher)) {
-    throw new TypeError(`matcher: ${MatcherTypeDescription}`);
-  }
+  isMatcher.assert(options.matcher, "matcher");
 
-  if (!isUndefined(options.recursive) && !isBoolean(options.recursive)) {
-    throw new TypeError("recursive is not a boolean");
+  if (!isUndefined(options.recursive)) {
+    isBoolean.assert(options.recursive, "recursive");
   }
 }
 

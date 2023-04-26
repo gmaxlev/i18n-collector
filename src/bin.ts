@@ -1,6 +1,6 @@
 import { Command, InvalidArgumentError } from "commander";
 import * as runner from "./runner";
-import { isString } from "./types";
+import { isString } from "tsguarder";
 import pkg from "../package.json";
 import * as watch from "./watch";
 

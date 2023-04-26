@@ -30,7 +30,7 @@ describe("parser.ts", () => {
 
       const result = expect(act);
 
-      result.toThrow("Options should be an object");
+      result.toThrow("options: must be a record");
     }
   });
 
@@ -45,7 +45,7 @@ describe("parser.ts", () => {
 
       const result = expect(act);
 
-      result.toThrow("filePath: should be a string");
+      result.toThrow("filePath: must be a string");
     }
   });
 
@@ -60,7 +60,7 @@ describe("parser.ts", () => {
 
       const result = expect(act);
 
-      result.toThrow("fileContent: should be a Buffer");
+      result.toThrow("fileContent: must be a Buffer");
     }
   });
 
@@ -122,7 +122,7 @@ describe("parser.ts", () => {
 
       const result = expect(act);
 
-      result.toThrow("By default locale file must be a valid JSON object");
+      result.toThrow("locale file: must be a record");
     }
   });
 

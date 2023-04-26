@@ -10,11 +10,9 @@ import {
   isLocaleFiles,
   isParseResult,
   isParserFunction,
-  LocaleFilesTypeDescription,
-  ParseResultTypeDescription,
-  ParserFunctionTypeDescription,
+  isPromise,
 } from "./types";
-import { isBoolean, isRecord, isPromise, isUndefined } from "./types";
+import { isBoolean, isRecord, isUndefined } from "tsguarder";
 
 export interface CompilerOptions {
   files: LocaleFiles;
@@ -68,11 +66,10 @@ function join(locales: ParseResult[], merge = true): CompiledLocales {
 
       const namespaceTranslations = translations[language];
 
-      if (!isRecord(namespaceTranslations)) {
-        throw new Error(
-          `Translations for language [${language}] and namespace [${namespace}] must be an object`
-        );
-      }
+      isRecord.assert(
+        namespaceTranslations,
+        `Translations for language [${language}] and namespace [${namespace}]`
+      );
 
       namespaceRecord = {
         ...namespaceRecord,
@@ -110,11 +107,7 @@ function wrapParseFunction(parser: ParserFunction) {
         });
     }
 
-    if (!isParseResult(parserValue)) {
-      throw new Error(
-        `Parser has returned an invalid type: ${ParseResultTypeDescription}`
-      );
-    }
+    isParseResult.assert(parserValue, "return value of a custom parser");
 
     return parserResultMayPromise;
   };
@@ -143,20 +136,16 @@ function wrapParseFunction(parser: ParserFunction) {
  */
 export async function compile(options: CompilerOptions) {
   try {
-    if (!isRecord(options)) {
-      throw new TypeError("Options is not an object");
+    isRecord.assert(options, "options");
+
+    isLocaleFiles.assert(options.files, "files");
+
+    if (!isUndefined(options.merge)) {
+      isBoolean.assert(options.merge, "merge");
     }
 
-    if (!isUndefined(options.merge) && !isBoolean(options.merge)) {
-      throw new TypeError("merge: must be a boolean or undefined");
-    }
-
-    if (!isLocaleFiles(options.files)) {
-      throw new TypeError(`files: ${LocaleFilesTypeDescription}`);
-    }
-
-    if (!isUndefined(options.parser) && !isParserFunction(options.parser)) {
-      throw new TypeError(`parser: ${ParserFunctionTypeDescription}`);
+    if (!isUndefined(options.parser)) {
+      isParserFunction.assert(options.parser, "parser");
     }
 
     // Wrap the parser function if it is provided or use the default parser

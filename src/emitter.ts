@@ -9,15 +9,8 @@ import type {
   LocaleFiles,
   Matcher,
 } from "./types";
-import {
-  CompiledLocalesTypeDescription,
-  isCompiledLocales,
-  isBoolean,
-  isEnoentError,
-  isRecord,
-  isString,
-  isUndefined,
-} from "./types";
+import { isCompiledLocales, isEnoentError } from "./types";
+import { isRecord, isString, isUndefined, isBoolean } from "tsguarder";
 
 export interface EmitterOptions {
   compiledLocales: CompiledLocales;
@@ -214,20 +207,14 @@ async function getSnapshot(path: string, matcher: Matcher): Promise<Snapshot> {
  * @returns Array of changed files
  */
 export async function emit(options: EmitterOptions) {
-  if (!isRecord(options)) {
-    throw new Error("options should be an object");
-  }
+  isRecord.assert(options, "options");
 
-  if (!isCompiledLocales(options.compiledLocales)) {
-    throw new Error(`compiledLocales: ${CompiledLocalesTypeDescription}`);
-  }
+  isString.assert(options.outputPath, "outputPath");
 
-  if (!isString(options.outputPath)) {
-    throw new Error("outputPath: should be a string");
-  }
+  isCompiledLocales.assert(options.compiledLocales, "compiledLocales");
 
-  if (!isUndefined(options.clear) && !isBoolean(options.clear)) {
-    throw new Error("clear: should be a boolean");
+  if (!isUndefined(options.clear)) {
+    isBoolean.assert(options.clear, "clear");
   }
 
   const clear = isBoolean(options.clear) ? options.clear : false;
