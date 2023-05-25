@@ -1,6 +1,6 @@
 {
   "name": "i18n-collector",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A tool for bundling localization files",
   "main": "./lib/index.js",
   "module": "./lib/index.esm.js",
@@ -35,12 +35,12 @@
   },
   "lint-staged": {
     "*.{ts,js}": [
-      "eslint . --fix",
-      "prettier --write .",
+      "eslint --fix",
+      "prettier --write",
       "npm run test"
     ],
     "*.md": [
-      "prettier --write ."
+      "prettier --write"
     ]
   },
   "files": [
