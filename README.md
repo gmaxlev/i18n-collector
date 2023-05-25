@@ -371,9 +371,14 @@ The function returns a promise that resolves to an array of [Stats](#stats-type)
 
 ### watch(options: RunnerOptions): Promise\<Stats[]\>
 
-This function is similar to run, but it also watches for changes in the input directory and automatically recompiles the translation files. It uses the same `RunnerOptions` object as the run function.
+This function is similar to run, but it also watches for changes in the input directory and automatically recompiles the translation files.
 
-> Note that you can use the `--watch` flag when running the command-line interface to achieve the same result.
+Receive the options `WatcherOptions` object with the same properties as the `RunnerOptions` object but with the following additional properties:
+
+- `hooks.beforeRun` [optional] - A function that will be called before running the pipeline.
+- `hooks.afterRun` [optional] - A function that will be called after running the pipeline.
+
+> Note that you can use the `--watch` flag when running the command-line interface.
 
 ### Types
 
