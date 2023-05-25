@@ -2,7 +2,15 @@ import { run, RunnerOptions, validateRunnerOptions } from "./runner";
 import fs from "fs";
 import { useMatcher } from "./utils";
 import path from "path";
-import { isEnoentError } from "./types";
+import { isEnoentError, MayAsync } from "./types";
+import type { Stats } from "./emitter";
+
+export interface WatcherOptions extends RunnerOptions {
+  hooks?: {
+    beforeRun?: () => unknown;
+    afterRun?: (stats: Stats[]) => unknown;
+  };
+}
 
 /**
  * The same as {@link run} but watch for changes in input directory
@@ -15,8 +23,11 @@ import { isEnoentError } from "./types";
  * @param options.recursive If true, the scan will be recursive. Default: true
  * @param options.clear If true, the output directory will be cleared before writing the compiled files. Default: false
  * @param options.parser The parser to use to parse the locale files
+ * @param options.hooks Allows you to hook into the watch process
+ * @param options.hooks.beforeRun Called before the compilation process
+ * @param options.hooks.afterRun Called after the compilation process
  */
-export async function watch(options: RunnerOptions) {
+export async function watch(options: WatcherOptions) {
   const validOptions = validateRunnerOptions(options);
 
   let planned = false;
@@ -32,7 +43,13 @@ export async function watch(options: RunnerOptions) {
     processing = true;
 
     try {
-      await run(validOptions);
+      if (options.hooks?.beforeRun) {
+        await options.hooks.beforeRun();
+      }
+      const stats = await run(validOptions);
+      if (options.hooks?.afterRun) {
+        await options.hooks.afterRun(stats);
+      }
     } catch (e) {
       console.error("Error while processing locales", e);
     } finally {
