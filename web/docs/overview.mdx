@@ -1,0 +1,32 @@
+---
+sidebar_position: 1
+---
+
+# Overview
+
+i18n-collector - is a Node.js tool for managing and compiling locale files.
+
+# The Problem
+
+Imagine you have a large web application,
+and you have to support many languages in it. How do you manage translations?
+
+There are many problems you can face with:
+
+- ❌ You have large translation files with many keys from different domain areas that are hard to manage.
+- ❌ You have to control that each translation key is unique manually.
+- ❌ You have to import many translation files into your app manually.
+- ❌ You have to keep track of too much information about your translations.
+
+This tool allows you to split your translations into any number of files and collect them into one file per language in the automatic mode.
+
+With this tool, you can:
+
+- ✅ Split your translations into any number of files.
+- ✅ One component / feature - one translation file.
+- ✅ Get only one file per language with all translations in the automatic mode.
+- ✅ Use the **watch mode** during development to automatically compile translation files whenever changes are made.
+
+:::info
+This tool is designed to help you manage many translation files and merge them into one file per language. It is recommended that you use an i18n library or framework to make use of these merged files.
+:::

@@ -1,0 +1,13 @@
+# scan
+
+**Scan the specified directory for localization files.**
+
+`scan (options: ScanOptions): Promise<LocaleFile[]>`
+
+The function takes the `ScanOptions` object as an argument, which includes the following properties:
+
+- `path` - The path to the directory to scan
+- `matcher` - A [Matcher](types.mdx#matcher-type) function for filtering the files to be scanned.
+- `recursive` [optional] - A boolean value indicating whether to scan subdirectories recursively. The default value is `true`.
+
+The function returns a promise that resolves to an array of [LocaleFile](types.mdx#localefile-type) objects

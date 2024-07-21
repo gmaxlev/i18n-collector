@@ -1,0 +1,31 @@
+---
+sidebar_position: 4
+---
+
+# CLI
+
+You can use the CLI to compile translation files.
+
+There is only one available command: `compile [options] <output>`.
+
+It requires one argument:
+
+- `output`: the directory where the translation files will be generated.
+
+Additionally, there are several options:
+
+- `input <value>`: the input directory where the tool will search for translation files. The default value is the current working directory.
+- `clear`: clears the output directory before compiling the translation files. The default value is `false`.
+- `watch`: watches for changes in the input directory and recompiles the translation files. Only use this option during development. The default value is `false`.
+- `recursive`: searches for translation files recursively. The default value is `true`.
+- `merge`: allows having the same namespace in different files. This is not recommended. The default value is `false`.
+- `help`: displays the help for the command.
+
+For example:
+
+```bash
+npx i18n-collector run locales --input src --clear --watch
+```
+
+The above command will compile translation files into the `./locales` directory and watch for changes to `*.locale.json` files in the `./src` directory.
+The `./locales` directory will be cleared before compiling translation files.

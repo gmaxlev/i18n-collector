@@ -31,7 +31,7 @@ export interface ValidRunnerOptions {
 }
 
 export function validateRunnerOptions(
-  options: RunnerOptions
+  options: RunnerOptions,
 ): ValidRunnerOptions {
   isRecord.assert(options, "options");
 
@@ -112,7 +112,7 @@ export async function run(options: RunnerOptions) {
 
   if (!inputPathExists) {
     throw new Error(
-      `inputPath "${validOptions.inputPath}" does not exist or it is not a directory`
+      `inputPath "${validOptions.inputPath}" does not exist or it is not a directory`,
     );
   }
 
@@ -133,8 +133,8 @@ export async function run(options: RunnerOptions) {
 
   console.log(
     `📝 Found ${chalk.yellow(files.length)} files in ${chalk.blue.bold(
-      validOptions.inputPath
-    )} to process`
+      validOptions.inputPath,
+    )} to process`,
   );
 
   let compilerOptions: CompilerOptions = {

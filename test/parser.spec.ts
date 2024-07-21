@@ -19,7 +19,7 @@ describe("parser.ts", () => {
           translations: {
             key: "value",
           },
-        })
+        }),
       ),
     };
   });
@@ -149,7 +149,7 @@ describe("parser.ts", () => {
       const result = expect(act);
 
       result.toThrow(
-        `Filename should contain language code in format "[namespace].locale.json"`
+        `Filename should contain language code in format "[namespace].locale.json"`,
       );
     }
   });
@@ -163,7 +163,7 @@ describe("parser.ts", () => {
           en: {
             key: "value",
           },
-        })
+        }),
       ),
     };
 
@@ -220,7 +220,7 @@ describe("parser.ts", () => {
               },
             },
           },
-        })
+        }),
       ),
     };
 

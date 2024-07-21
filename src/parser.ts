@@ -15,7 +15,7 @@ function getNamespace(filePath: string) {
     result[0][1].trim() === ""
   ) {
     throw new Error(
-      `Filename  ${filePath} has an invalid name. Filename should contain language code in format "[namespace].locale.json"`
+      `Filename  ${filePath} has an invalid name. Filename should contain language code in format "[namespace].locale.json"`,
     );
   }
 
