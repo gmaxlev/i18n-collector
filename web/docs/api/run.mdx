@@ -1,0 +1,17 @@
+# run
+
+**Runs the entire pipeline, including scanning the directory for localization files, compiling the locales, and emitting the results to the file system.**
+
+`run(options: RunnerOptions): Promise\<Stats[]\>`
+
+Receive the options `RunnerOptions` object with the following properties:
+
+- `outputPath` - The path to the directory where the files will be written.
+- `inputPath` [optional] - The path to the directory to scan.
+- `matcher` [optional] - The [Matcher](types.mdx#matcher-type) to use for filtering files. This can be a `RegExp` or a `function` that receives a file path and returns a boolean. The default value is `/.+\.locale\.json/`.
+- `merge` [optional] - A boolean value indicating whether to merge namespaces from different files. The default value is `false`.
+- `clear` [optional] - A boolean value indicating whether to clear the output directory before writing files. The default value is `false`.
+- `recursive` [optional] - A boolean value indicating whether to scan subdirectories recursively. The default value is `true`.
+- `parser` [optional] - The [Parser](types.mdx#parser-type) object to use for parsing the files.
+
+The function returns a promise that resolves to an array of [Stats](types.mdx#stats-type) objects

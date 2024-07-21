@@ -1,0 +1,28 @@
+---
+sidebar_position: 3
+---
+
+# Requirements
+
+There are several requirements for your project to use `i18n-collector`.
+
+## 1. Use `[namespace].locale.json` extension for translation files
+
+Each translation file should have a `[namespace].locale.json` extension where `[namespace]` is a namespace for your translations.
+
+:::info
+You can override this behavior by using JavaScript API.
+:::
+
+## 2. Use a separate file for each namespace
+
+You will get an error if you have the same namespace in different files. It ensures a better development experience.
+
+:::info
+You can override this behavior by using `--merge` option or JavaScript API.
+:::
+
+## 3. Import only compiled files
+
+Do not import `[namespace].locale.json` files directly.
+Import only compiled files.

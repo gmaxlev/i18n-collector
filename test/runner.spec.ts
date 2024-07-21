@@ -77,7 +77,7 @@ describe("Runner", () => {
         const result = await expect(act);
 
         await result.rejects.toThrow(
-          `matcher: must be a RegExp or (fileName: string) => boolean`
+          `matcher: must be a RegExp or (fileName: string) => boolean`,
         );
       }
     });
@@ -120,7 +120,7 @@ describe("Runner", () => {
           },
           file: "content",
         },
-        "/src"
+        "/src",
       );
 
       const params: RunnerOptions = {
@@ -133,7 +133,7 @@ describe("Runner", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `inputPath "/file" does not exist or it is not a directory`
+        `inputPath "/file" does not exist or it is not a directory`,
       );
     });
 
@@ -180,7 +180,7 @@ describe("Runner", () => {
             },
             file: "content",
           },
-          "/src"
+          "/src",
         );
 
         const result = await run(option);
@@ -259,7 +259,7 @@ describe("Runner", () => {
             some_other_file_but_should_be_delete: "some_other_content",
           },
         },
-        "/home"
+        "/home",
       );
 
       const options: RunnerOptions = {

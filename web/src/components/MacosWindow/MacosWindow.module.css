@@ -1,0 +1,72 @@
+:root {
+  --macos-window-header: #dddddd;
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #dddddd;
+}
+
+.header {
+  background-color: var(--macos-window-header);
+  border-radius: 8px 8px 0 0;
+  height: 28px;
+  padding: 8px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.header__text {
+  font-weight: bold;
+  color: #555555;
+  font-size: 0.85rem;
+}
+
+.buttons {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: 8px;
+  display: flex;
+}
+
+.button {
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+}
+
+.button:last-child {
+  margin-right: 0;
+}
+
+.button_close {
+  background-color: #ec6a5f;
+  border: 1px solid #e35b4f;
+  border-radius: 50%;
+}
+
+.button_minimize {
+  background-color: #f4bf4f;
+  border: 1px solid #e8b344;
+  border-radius: 50%;
+}
+
+.button_expand {
+  background-color: #61c554;
+  border: 1px solid #58bd4a;
+  border-radius: 50%;
+}
+
+.window {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgb(0 0 0 / 15%);
+}
+
+.content {
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}

@@ -35,7 +35,7 @@ function log(outputPath: string, stats: Stats[]) {
   stats.forEach((item, index) => {
     const relativePath = path.basename(item.filePath);
     const fileNameLog = `${chalk.white.bold(`${index + 1}`)}. ${chalk.blue.bold(
-      relativePath
+      relativePath,
     )}`;
 
     if (item.isNew) {
@@ -55,7 +55,7 @@ function log(outputPath: string, stats: Stats[]) {
       const fileSizeNew = Number(item.localeFileNew?.bytes);
       const sizeAfterLog = chalk.white(getStringFilesize(fileSizeNew));
       console.log(
-        `${fileNameLog} ${changedLog} ${sizeBeforeLog} ${dividerLog} ${sizeAfterLog}`
+        `${fileNameLog} ${changedLog} ${sizeBeforeLog} ${dividerLog} ${sizeAfterLog}`,
       );
     } else if (item.isDeleted) {
       const unchangedLog = chalk.bgRed("deleted");
@@ -75,7 +75,7 @@ function log(outputPath: string, stats: Stats[]) {
 
 async function emitFile(
   filePath: string,
-  content: Buffer
+  content: Buffer,
 ): Promise<LocaleFile> {
   await fsp.access(filePath).catch((e) => {
     if (!isEnoentError(e)) {

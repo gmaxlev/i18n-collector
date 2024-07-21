@@ -1,0 +1,13 @@
+# compile
+
+**Compiles the specified locales.**
+
+`compile(options: CompileOptions): Promise<CompiledLocales>`
+
+The function takes the `CompileOptions` object as an argument, which includes the following properties:
+
+- `files` - The array of [LocaleFile](#localefile-type) objects to be compiled.
+- `parser` [optional] - A [Parser](#parser-type) object for parsing the files.
+- `merge` [optional] - A boolean value indicating whether to merge namespaces from different files. The default value is `false`.
+
+Returns a promise that resolves to the [CompiledLocales](types.mdx#compiledlocales-type) object.

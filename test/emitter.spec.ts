@@ -45,7 +45,7 @@ describe("emitter.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `compiledLocales: must be Record<string, Record<string, unknown>>`
+        `compiledLocales: must be Record<string, Record<string, unknown>>`,
       );
     });
 
@@ -81,7 +81,7 @@ describe("emitter.ts", () => {
             "file3.local.json": "1",
           },
         },
-        "/src"
+        "/src",
       );
 
       const options = { ...correctOptions, outputPath: "/src/directory" };
@@ -91,7 +91,7 @@ describe("emitter.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        'Output path "/src/directory" is not a directory'
+        'Output path "/src/directory" is not a directory',
       );
     });
 
@@ -117,7 +117,7 @@ describe("emitter.ts", () => {
               "program.ts": "...",
             },
           },
-          "/src"
+          "/src",
         );
 
         const options = {
@@ -167,7 +167,7 @@ describe("emitter.ts", () => {
 
           const bufferMatchResult =
             resultElement1.localeFileNew?.content.equals(
-              Buffer.from(JSON.stringify(options.compiledLocales.uk))
+              Buffer.from(JSON.stringify(options.compiledLocales.uk)),
             );
 
           expect(bufferMatchResult).toBe(true);
@@ -178,7 +178,7 @@ describe("emitter.ts", () => {
 
           const bufferMatchResult =
             resultElement2.localeFileNew?.content.equals(
-              Buffer.from(JSON.stringify(options.compiledLocales.en))
+              Buffer.from(JSON.stringify(options.compiledLocales.en)),
             );
 
           expect(bufferMatchResult).toBe(true);
@@ -274,12 +274,12 @@ describe("emitter.ts", () => {
 
         const bufferMatchNewResult =
           resultElement1.localeFileNew?.content.equals(
-            Buffer.from(JSON.stringify(options.compiledLocales.uk))
+            Buffer.from(JSON.stringify(options.compiledLocales.uk)),
           );
 
         const bufferMatchOldResult =
           resultElement1.localeFileBefore?.content.equals(
-            Buffer.from(fsSnapshot.locales["uk.json"])
+            Buffer.from(fsSnapshot.locales["uk.json"]),
           );
 
         expect(bufferMatchNewResult).toBe(true);
@@ -292,12 +292,12 @@ describe("emitter.ts", () => {
 
         const bufferMatchNewResult =
           resultElement2.localeFileNew?.content.equals(
-            Buffer.from(JSON.stringify(options.compiledLocales.en))
+            Buffer.from(JSON.stringify(options.compiledLocales.en)),
           );
 
         const bufferMatchOldResult =
           resultElement2.localeFileBefore?.content.equals(
-            Buffer.from(fsSnapshot.locales["en.json"])
+            Buffer.from(fsSnapshot.locales["en.json"]),
           );
 
         expect(bufferMatchNewResult).toBe(true);
@@ -309,7 +309,7 @@ describe("emitter.ts", () => {
 
         const bufferMatchOldResult =
           resultElement3.localeFileBefore?.content.equals(
-            Buffer.from(fsSnapshot.locales["fr.json"])
+            Buffer.from(fsSnapshot.locales["fr.json"]),
           );
 
         expect(bufferMatchOldResult).toBe(true);
@@ -396,12 +396,12 @@ describe("emitter.ts", () => {
 
         const bufferMatchNewResult =
           resultElement1.localeFileNew?.content.equals(
-            Buffer.from(JSON.stringify(options.compiledLocales.uk))
+            Buffer.from(JSON.stringify(options.compiledLocales.uk)),
           );
 
         const bufferMatchOldResult =
           resultElement1.localeFileBefore?.content.equals(
-            Buffer.from(fsSnapshot.locales["uk.json"])
+            Buffer.from(fsSnapshot.locales["uk.json"]),
           );
 
         expect(bufferMatchNewResult).toBe(true);
@@ -414,12 +414,12 @@ describe("emitter.ts", () => {
 
         const bufferMatchNewResult =
           resultElement2.localeFileNew?.content.equals(
-            Buffer.from(JSON.stringify(options.compiledLocales.en))
+            Buffer.from(JSON.stringify(options.compiledLocales.en)),
           );
 
         const bufferMatchOldResult =
           resultElement2.localeFileBefore?.content.equals(
-            Buffer.from(fsSnapshot.locales["en.json"])
+            Buffer.from(fsSnapshot.locales["en.json"]),
           );
 
         expect(bufferMatchNewResult).toBe(true);

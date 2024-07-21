@@ -23,7 +23,7 @@ export interface CompilerOptions {
 function findIdInLocales(
   locales: ParseResult[],
   language: string,
-  namespace?: LocaleNamespace
+  namespace?: LocaleNamespace,
 ) {
   for (const locale of locales) {
     if (locale === null) {
@@ -53,11 +53,11 @@ function join(locales: ParseResult[], merge = true): CompiledLocales {
         const conflictedLocaleId = findIdInLocales(
           locales.filter((item) => item !== locale),
           language,
-          namespace
+          namespace,
         );
 
         throw new Error(
-          `Locales [${id}] and [${conflictedLocaleId}] have the same namespace. If you want to allow merging, set the "merge" option to true`
+          `Locales [${id}] and [${conflictedLocaleId}] have the same namespace. If you want to allow merging, set the "merge" option to true`,
         );
       }
 
@@ -68,7 +68,7 @@ function join(locales: ParseResult[], merge = true): CompiledLocales {
 
       isRecord.assert(
         namespaceTranslations,
-        `Translations for language [${language}] and namespace [${namespace}]`
+        `Translations for language [${language}] and namespace [${namespace}]`,
       );
 
       namespaceRecord = {
@@ -156,8 +156,8 @@ export async function compile(options: CompilerOptions) {
         parser({
           filePath: file.filePath,
           fileContent: file.content,
-        })
-      )
+        }),
+      ),
     );
 
     return join(parsed, options.merge);

@@ -12,21 +12,21 @@ export const isBuffer: TypeGuard<Buffer> = createTypeGuard(
   "must be a Buffer",
   (value: unknown): value is Buffer => {
     return value instanceof Buffer;
-  }
+  },
 );
 
 export const isPromise: TypeGuard<Promise<unknown>> = createTypeGuard(
   "must be a Promise",
   (value: unknown): value is Promise<unknown> => {
     return isRecord(value) && typeof value["then"] === "function";
-  }
+  },
 );
 
 export const isEnoentError: TypeGuard<NodeJS.ErrnoException> = createTypeGuard(
   "must be a NodeJS.ErrnoException",
   (value: unknown): value is NodeJS.ErrnoException => {
     return isRecord(value) && value["code"] === "ENOENT";
-  }
+  },
 );
 
 /**
@@ -45,7 +45,7 @@ export const isMatcher: TypeGuard<Matcher> = createTypeGuard(
   "must be a RegExp or (fileName: string) => boolean",
   (value: unknown): value is Matcher => {
     return value instanceof RegExp || typeof value === "function";
-  }
+  },
 );
 
 /** Namespace Type */
@@ -56,7 +56,7 @@ export const isLocaleNamespace: TypeGuard<LocaleNamespace> = createTypeGuard(
   "must be a string",
   (value: unknown): value is LocaleNamespace => {
     return isString(value);
-  }
+  },
 );
 
 /** LocaleFile Type */
@@ -89,7 +89,7 @@ export const isLocaleFile: TypeGuard<LocaleFile> = createTypeGuard(
     }
 
     return true;
-  }
+  },
 );
 
 export type LocaleFiles = LocaleFile[];
@@ -98,7 +98,7 @@ export const isLocaleFiles: TypeGuard<LocaleFile[]> = createTypeGuard(
   "must be Array<{ filePath: string, content: Buffer, bytes: number }>",
   (value: unknown): value is LocaleFile[] => {
     return Array.isArray(value) && value.every(isLocaleFile);
-  }
+  },
 );
 
 /** ParserFunction Type */
@@ -114,7 +114,7 @@ export const isParserFunction: TypeGuard<ParserFunction> = createTypeGuard(
   "must be a function",
   (value: unknown): value is ParserFunction => {
     return isFunction(value);
-  }
+  },
 );
 
 /** ParseResult Type */
@@ -151,7 +151,7 @@ export const isParseResult: TypeGuard<ParseResult> = createTypeGuard(
     }
 
     return true;
-  }
+  },
 );
 
 /** CompiledLocales Type */
@@ -172,5 +172,5 @@ export const isCompiledLocales: TypeGuard<CompiledLocales> = createTypeGuard(
     }
 
     return true;
-  }
+  },
 );

@@ -13,7 +13,7 @@ describe("compiler.ts", () => {
         {
           filePath: "/replace/in/test",
           content: Buffer.from(
-            '{"namespace": "module", "translations":{"key":"value"}}'
+            '{"namespace": "module", "translations":{"key":"value"}}',
           ),
           bytes: 15,
         },
@@ -56,7 +56,7 @@ describe("compiler.ts", () => {
         const result = await expect(act);
 
         await result.rejects.toThrow(
-          `files: must be Array<{ filePath: string, content: Buffer, bytes: number }>`
+          `files: must be Array<{ filePath: string, content: Buffer, bytes: number }>`,
         );
       }
     });
@@ -87,7 +87,7 @@ describe("compiler.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `return value of a custom parser: must be { translations: object, namespace: string, id: unknown }`
+        `return value of a custom parser: must be { translations: object, namespace: string, id: unknown }`,
       );
     });
 
@@ -105,7 +105,7 @@ describe("compiler.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `return value of a custom parser: must be { translations: object, namespace: string, id: unknown }`
+        `return value of a custom parser: must be { translations: object, namespace: string, id: unknown }`,
       );
     });
 
@@ -161,7 +161,7 @@ describe("compiler.ts", () => {
                 en: {
                   key: "_value_2",
                 },
-              })
+              }),
             ),
             bytes: 15,
           },
@@ -192,7 +192,7 @@ describe("compiler.ts", () => {
             uk: {
               key_1: "_value_1",
             },
-          })
+          }),
         ),
         bytes: 15,
       };
@@ -204,7 +204,7 @@ describe("compiler.ts", () => {
             en: {
               key_2: "_value_2",
             },
-          })
+          }),
         ),
         bytes: 15,
       };
@@ -216,7 +216,7 @@ describe("compiler.ts", () => {
             fr: {
               key_3: "_value_3",
             },
-          })
+          }),
         ),
         bytes: 15,
       };
@@ -228,7 +228,7 @@ describe("compiler.ts", () => {
             fr: {
               key_4: "_value_4",
             },
-          })
+          }),
         ),
         bytes: 15,
       };
@@ -261,7 +261,7 @@ describe("compiler.ts", () => {
             uk: {
               key_1: "_value_1",
             },
-          })
+          }),
         ),
         bytes: 15,
       };
@@ -273,7 +273,7 @@ describe("compiler.ts", () => {
             en: {
               key_2: "_value_2",
             },
-          })
+          }),
         ),
         bytes: 15,
       };
@@ -285,7 +285,7 @@ describe("compiler.ts", () => {
             fr: {
               key_3: "_value_3",
             },
-          })
+          }),
         ),
         bytes: 15,
       };
@@ -297,7 +297,7 @@ describe("compiler.ts", () => {
             fr: {
               key_4: "_value_4",
             },
-          })
+          }),
         ),
         bytes: 15,
       };
@@ -317,7 +317,7 @@ describe("compiler.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `Locales [/src/another/module/two/_another_namespace_.locale.json] and [/src/another/module/_another_namespace_.locale.json] have the same namespace. If you want to allow merging, set the \"merge\" option to true`
+        `Locales [/src/another/module/two/_another_namespace_.locale.json] and [/src/another/module/_another_namespace_.locale.json] have the same namespace. If you want to allow merging, set the \"merge\" option to true`,
       );
     });
   });

@@ -30,12 +30,12 @@ describe("Utils", () => {
     test("Should use function", async () => {
       const result1 = await useMatcher(
         (filePath) => /file2/.test(filePath),
-        "/src/file2.json"
+        "/src/file2.json",
       );
       expect(result1).toBe(true);
       const result2 = await useMatcher(
         (filePath) => /notexistingfile/.test(filePath),
-        "/src/file2.json"
+        "/src/file2.json",
       );
       expect(result2).toBe(false);
     });
@@ -44,10 +44,10 @@ describe("Utils", () => {
         useMatcher(
           // @ts-expect-error
           () => "not boolean",
-          "/src/file2.json"
+          "/src/file2.json",
         );
       await expect(act).rejects.toThrowError(
-        "Matcher should return boolean or Promise<boolean>"
+        "Matcher should return boolean or Promise<boolean>",
       );
     });
   });

@@ -20,14 +20,14 @@ program
     "-r, --recursive [value]",
     "whether to scan the directory recursively",
     parseBooleanInput,
-    true
+    true,
   )
   .option("-c, --clear [value]", "clear output path", parseBooleanInput, false)
   .option(
     "-m, --merge [value]",
     "allow merging the same namespace from different files",
     parseBooleanInput,
-    false
+    false,
   )
   .option("-i, --input <value>", "input path")
   .action(async (output, options) => {

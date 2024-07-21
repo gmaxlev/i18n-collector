@@ -29,7 +29,7 @@ describe("watch.ts", () => {
             },
           },
         },
-        "/home"
+        "/home",
       );
 
       const beforeRun = jest.fn();
@@ -72,7 +72,7 @@ describe("watch.ts", () => {
             },
           },
         },
-        "/home"
+        "/home",
       );
 
       const afterRun = jest.fn();
@@ -99,7 +99,7 @@ describe("watch.ts", () => {
           expect.objectContaining({
             filePath: "/home/dist/en.json",
           }),
-        ])
+        ]),
       );
 
       expect(vol.toJSON()).toEqual({
@@ -174,7 +174,7 @@ describe("watch.ts", () => {
             some_other_file_but_should_be_delete: "some_other_content",
           },
         },
-        "/home"
+        "/home",
       );
 
       const options: WatcherOptions = {
