@@ -1,4 +1,6 @@
-# 🈯️️ i18n-collector
+# 🈯️️ [i18n-collector](https://gmaxlev.github.io/i18n-collector/)
+
+The documentation is published on [gmaxlev.github.io/i18n-collector](https://gmaxlev.github.io/i18n-collector/).
 
 A tool for managing and compiling locale files.
 
