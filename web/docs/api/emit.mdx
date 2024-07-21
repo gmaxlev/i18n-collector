@@ -1,0 +1,13 @@
+# emit
+
+**Writes the compiled locales to the file system.**
+
+`emit(options: EmitOptions): Promise<Stats[]>`
+
+The function takes the `EmitOptions` object as an argument, which includes the following properties:
+
+- `locales` - A [CompiledLocales](types.mdx#compiledlocales-type) object.
+- `outputPath` - The path to the directory where the files will be written.
+- `clear` [optional] - A boolean value indicating whether to clear the output directory before writing files. The default value is `false`.
+
+The function returns a promise that resolves to an array of [Stats](types.mdx#stats-type) objects.

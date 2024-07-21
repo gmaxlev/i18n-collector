@@ -98,7 +98,7 @@ export async function watch(options: WatcherOptions) {
         planned = false;
         runInWatchContext();
       });
-    }
+    },
   );
 
   await runInWatchContext();

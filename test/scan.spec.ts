@@ -53,7 +53,7 @@ describe("scan.ts", () => {
         const result = await expect(act);
 
         await result.rejects.toThrow(
-          `matcher: must be a RegExp or (fileName: string) => boolean`
+          `matcher: must be a RegExp or (fileName: string) => boolean`,
         );
       }
     });
@@ -66,7 +66,7 @@ describe("scan.ts", () => {
       const result = await expect(act);
 
       await result.rejects.not.toThrow(
-        `matcher: must be a RegExp or (fileName: string) => boolean`
+        `matcher: must be a RegExp or (fileName: string) => boolean`,
       );
     });
 
@@ -90,7 +90,7 @@ describe("scan.ts", () => {
             "file.json": "content",
           },
         },
-        "/src"
+        "/src",
       );
 
       const path = "/src/directory_b";
@@ -102,7 +102,7 @@ describe("scan.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `Path "${path}" does not exist or it is not a directory`
+        `Path "${path}" does not exist or it is not a directory`,
       );
     });
 
@@ -115,7 +115,7 @@ describe("scan.ts", () => {
             "file.json": "content",
           },
         },
-        "/src"
+        "/src",
       );
 
       const path = "/src/directory_b";
@@ -127,7 +127,7 @@ describe("scan.ts", () => {
       const result = await expect(act);
 
       await result.rejects.toThrow(
-        `Path "${path}" does not exist or it is not a directory`
+        `Path "${path}" does not exist or it is not a directory`,
       );
     });
 
@@ -141,7 +141,7 @@ describe("scan.ts", () => {
             "file.json": "content",
           },
         },
-        "/src"
+        "/src",
       );
 
       const params = {
@@ -168,7 +168,7 @@ describe("scan.ts", () => {
             "file2.json": "content",
           },
         },
-        "/src"
+        "/src",
       );
 
       const params = {
@@ -203,7 +203,7 @@ describe("scan.ts", () => {
             "_file3.json": "matched file",
           },
         },
-        "/src"
+        "/src",
       );
 
       const params: ScanOptions = {
@@ -239,7 +239,7 @@ describe("scan.ts", () => {
             "_file3.json": "matched file",
           },
         },
-        "/src"
+        "/src",
       );
 
       const params: ScanOptions = {

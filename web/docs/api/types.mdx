@@ -1,0 +1,58 @@
+---
+sidebar_position: 1
+---
+
+# Types
+
+## Parser (Type)
+
+```ts
+type Parser = MayAsync<
+  (options: { filePath: string; fileContent: Buffer }) => ParseResult
+>;
+```
+
+## ParseResult (Type)
+
+```ts
+type ParseResult = {
+  id: unknown;
+  translations: Record<string, unknown>;
+  namespace: string;
+};
+```
+
+## Matcher (Type)
+
+```ts
+type Matcher = RegExp | MayAsync<(filePath: string) => boolean>;
+```
+
+## LocaleFile (Type)
+
+```ts
+type LocaleFile = {
+  filePath: string;
+  content: Buffer;
+  bytes: number;
+};
+```
+
+## CompiledLocales (Type)
+
+```ts
+type CompiledLocales = Record<string, Record<string, unknown>>;
+```
+
+## Stats (Type)
+
+```ts
+type Stats = {
+  filePath: string;
+  isNew: boolean;
+  isChanged: boolean;
+  isDeleted: boolean;
+  localeNewFile: LocaleFile | null;
+  localeFileBefore: LocaleFile | null;
+};
+```

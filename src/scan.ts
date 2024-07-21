@@ -15,7 +15,7 @@ async function scanDirectory(
   from: string,
   match: Matcher,
   recursive = true,
-  collection: LocaleFile[] = []
+  collection: LocaleFile[] = [],
 ) {
   const result = await fsp.readdir(from).catch((e) => {
     console.error("Error while reading directory", from);
@@ -87,7 +87,7 @@ export async function scan(options: ScanOptions) {
 
     if (!exist) {
       throw new Error(
-        `Path "${options.path}" does not exist or it is not a directory`
+        `Path "${options.path}" does not exist or it is not a directory`,
       );
     }
 

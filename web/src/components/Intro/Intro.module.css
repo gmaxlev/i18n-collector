@@ -1,0 +1,51 @@
+.intro {
+  display: flex;
+  flex-direction: row;
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+.brand {
+  width: 60%;
+}
+
+.console {
+  width: 40%;
+  margin-top: 0;
+}
+
+.header {
+  font-size: 3rem;
+}
+
+.comment {
+  font-size: 1.5rem;
+}
+
+.logo {
+  width: 38px;
+  height: 38px;
+  margin-right: 20px;
+}
+
+@media screen and (max-width: 996px) {
+  .intro {
+    flex-direction: column;
+  }
+  .brand {
+    width: 100%;
+  }
+
+  .console {
+    width: 100%;
+    margin-top: 40px;
+  }
+
+  .header {
+    font-size: 2.5rem;
+  }
+
+  .comment {
+    font-size: 1.25rem;
+  }
+}
