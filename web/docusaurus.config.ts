@@ -6,12 +6,11 @@ const config: Config = {
   title: "i18n-collector",
   tagline: "A tool for managing and compiling locale files.",
   favicon: "img/favicon.ico",
-
   // Set the production url of your site here
-  url: "https://gmaxlev.github.io",
+  url: "https://i18n-collector.js.org",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: "/i18n-collector",
+  baseUrl: "/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
